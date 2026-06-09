@@ -1,0 +1,18 @@
+{
+  "id": "/dashboard",
+  "name": "Marym Atelier Dashboard",
+  "short_name": "Dashboard",
+  "description": "Dashboard for Marym Atelier",
+  "start_url": "/dashboard",
+  "scope": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/appicon.jpg",
+      "sizes": "any",
+      "type": "image/jpeg"
+    }
+  ]
+}

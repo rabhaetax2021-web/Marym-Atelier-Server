@@ -1,0 +1,14 @@
+{
+  "id": "/",
+  "name": "Marym Atelier",
+  "short_name": "Marym",
+  "description": "Client-facing Marym Atelier website",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/appicon.jpg", "sizes": "any", "type": "image/jpeg" }
+  ]
+}

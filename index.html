@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ar" dir="auto">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Dynamically add or remove manifest link so only Dashboard and Sales expose installable manifests
+      (function(){
+        try{
+          var p = location.pathname || '/';
+          var existing = document.querySelector('link[rel="manifest"]');
+          if(p.indexOf('/dashboard') === 0){
+            if(!existing){ existing = document.createElement('link'); existing.rel = 'manifest'; document.head.appendChild(existing); }
+            existing.href = '/dashboard/manifest.webmanifest';
+          } else if(p.indexOf('/sales') === 0){
+            if(!existing){ existing = document.createElement('link'); existing.rel = 'manifest'; document.head.appendChild(existing); }
+            existing.href = '/sales/manifest.webmanifest';
+          } else {
+            // add root manifest for client-facing site
+            if(!existing){ existing = document.createElement('link'); existing.rel = 'manifest'; document.head.appendChild(existing); }
+            existing.href = '/manifest.webmanifest';
+          }
+        }catch(e){ console.error(e); }
+      })();
+    </script>
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Marym Atelier — Bridal Counture, Rental Luxury Dresses" />
+    <meta property="og:site_name" content="Marym Atelier" />
+    <meta property="og:locale" content="ar_EG" />
+    <title>Marym Atelier — Wedding Dresses</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Register the appropriate service worker for the current route (dashboard or sales)
+      (function(){
+        if('serviceWorker' in navigator){
+          var p = location.pathname || '/';
+          if(p.indexOf('/dashboard') === 0){
+            navigator.serviceWorker.register('/dashboard/sw.js', { scope: '/dashboard/' }).then(()=>console.log('Dashboard SW registered')).catch(console.error);
+          } else if(p.indexOf('/sales') === 0){
+            navigator.serviceWorker.register('/sales/sw.js', { scope: '/sales/' }).then(()=>console.log('Sales SW registered')).catch(console.error);
+          } else {
+            // register root client SW
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(()=>console.log('Client SW registered')).catch(console.error);
+          }
+        }
+
+        // helper to subscribe to push from app code: call window.registerForPush(VAPID_PUBLIC_KEY)
+        window.registerForPush = async function(vapidPublicKeyBase64){
+          if(!('serviceWorker' in navigator)) throw new Error('No Service Worker support');
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidPublicKeyBase64) });
+          return sub;
+        };
+
+        function urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const rawData = atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+      })();
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

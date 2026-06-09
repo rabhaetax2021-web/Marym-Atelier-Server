@@ -1,0 +1,18 @@
+{
+  "id": "/sales",
+  "name": "Sales App",
+  "short_name": "Sales",
+  "description": "Sales app for Marym Atelier",
+  "start_url": "/sales",
+  "scope": "/sales",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/appicon.jpg",
+      "sizes": "any",
+      "type": "image/jpeg"
+    }
+  ]
+}
