@@ -24,3 +24,35 @@ This project uses a serverless API to send WhatsApp notifications. For productio
 - `WHATSAPP_ADMIN_NUMBER` — Recipient/admin phone number (EG: 2010xxxxxxxx)
 
 The admin settings UI no longer stores the access token or phone number ID in localStorage; the server reads them from the platform environment variables.
+
+## Deployment to VPS
+
+### Quick Links
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Complete VPS deployment guide (PostgreSQL, Nginx, SSL, PM2/systemd)
+- **[LOCAL_TESTING.md](./LOCAL_TESTING.md)** — Local development and testing setup
+- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** — Pre-deployment, deployment, and post-deployment verification
+
+### Quick Reference
+
+**Local Development:**
+```bash
+npm run dev:server      # Backend on :3000
+npm run dev            # Frontend on :5173
+```
+
+**Production (VPS):**
+```bash
+# Via Nginx reverse proxy (port 80 → 3000)
+sudo systemctl status marymatelier
+
+# Via PM2
+pm2 logs marymatelier
+pm2 monit
+```
+
+**Common Issues:**
+- Database connection errors: Check `.env.production` credentials and PostgreSQL status
+- CORS issues: Verify `CORS_ORIGIN` environment variable
+- Port 3000 in use: `lsof -i :3000` and kill the process
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) Troubleshooting section for detailed solutions.

@@ -8,6 +8,10 @@ import {
   deleteDress as deleteDressAPI,
   updateReservation as updateReservationAPI,
   deleteReservation,
+  fetchFAQs,
+  createFAQ,
+  updateFAQ,
+  deleteFAQ,
 } from '../services/dbService';
 import { testWhatsAppConnection, notifyOrderConfirmed } from '../services/whatsappNotify';
 import DressFormModal from '../components/DressFormModal';
@@ -53,9 +57,8 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
     load();
     (async () => {
       try {
-        const resp = await fetch('/api/faqs');
-        const faqsData = await resp.json();
-        if (resp.ok) setFaqs(Array.isArray(faqsData) ? faqsData : []);
+        const faqsData = await fetchFAQs();
+        if (faqsData) setFaqs(Array.isArray(faqsData) ? faqsData : []);
         else setFaqs([]);
       } catch (err) {
         console.error('Failed to load faqs', err);
@@ -171,11 +174,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
     if (isFaqEditing && faqForm.id) {
       (async () => {
         try {
-          const resp = await fetch(`/api/faqs?id=${encodeURIComponent(faqForm.id)}`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: trimmedQ, answer: trimmedA })
-          });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error || 'Failed to update FAQ');
+          const data = await updateFAQ(faqForm.id, { question: trimmedQ, answer: trimmedA });
           const updated = faqs.map((f) => (f.id === faqForm.id ? data : f));
           saveFaqsToStorage(updated);
         } catch (err) { console.error(err); }
@@ -184,9 +183,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
       (async () => {
         try {
           const payload = { id: String(Date.now()), question: trimmedQ, answer: trimmedA };
-          const resp = await fetch('/api/faqs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error || 'Failed to create FAQ');
+          const data = await createFAQ(payload);
           saveFaqsToStorage([data, ...faqs]);
         } catch (err) { console.error(err); }
       })();
@@ -206,9 +203,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
     if (!window.confirm(t('admin.confirmDeleteFaq'))) return;
     (async () => {
       try {
-        const resp = await fetch(`/api/faqs?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data?.error || 'Failed to delete FAQ');
+        await deleteFAQ(id);
         const remaining = faqs.filter((f) => f.id !== id);
         saveFaqsToStorage(remaining);
       } catch (err) { console.error(err); }

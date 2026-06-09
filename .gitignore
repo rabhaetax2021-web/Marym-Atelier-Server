@@ -11,9 +11,13 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables (but keep .env.template for reference)
 .env
 .env.local
 .env.*.local
+logs/
+*.log
 
 # Editor directories and files
 .vscode/*
@@ -27,4 +31,4 @@ dist-ssr
 *.sw?
 
 .vercel
-.env*
+

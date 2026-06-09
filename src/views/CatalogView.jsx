@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, ShoppingBag, Heart } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLang } from '../contexts/LanguageProvider';
+import { fetchFAQs, getSetting } from '../services/dbService';
 
 export default function CatalogView({ dresses, onSelectDress }) {
   const { lang, setLang, t } = useLang();
@@ -112,9 +113,8 @@ export default function CatalogView({ dresses, onSelectDress }) {
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch('/api/faqs');
-        const data = await resp.json();
-        if (resp.ok) setFaqs(Array.isArray(data) ? data : []);
+        const data = await fetchFAQs();
+        if (data) setFaqs(Array.isArray(data) ? data : []);
         else setFaqs([]);
       } catch {
         setFaqs([]);
@@ -125,9 +125,8 @@ export default function CatalogView({ dresses, onSelectDress }) {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/api/settings?key=default_sort');
-        const data = await r.json();
-        if (r.ok && data && data.value) setSortOrder(String(data.value));
+        const data = await getSetting('default_sort');
+        if (data && data.value) setSortOrder(String(data.value));
       } catch {
         // ignore
       }
@@ -142,9 +141,8 @@ export default function CatalogView({ dresses, onSelectDress }) {
         if (!e || e.key === 'mary_faqs') {
           (async () => {
             try {
-              const resp = await fetch('/api/faqs');
-              const data = await resp.json();
-              if (resp.ok) setFaqs(Array.isArray(data) ? data : []);
+              const data = await fetchFAQs();
+              if (data) setFaqs(Array.isArray(data) ? data : []);
             } catch { /* ignore */ }
           })();
         }

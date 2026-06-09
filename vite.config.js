@@ -1,13 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { notifyReservationDevPlugin } from './vite-plugin-notify-api.js'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    notifyReservationDevPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['appicon.jpg', 'robots.txt'],
