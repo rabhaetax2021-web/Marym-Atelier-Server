@@ -35,6 +35,7 @@ const designersRouterModule = await import('./server/routes/designers.js');
 const faqsRouterModule = await import('./server/routes/faqs.js');
 const settingsRouterModule = await import('./server/routes/settings.js');
 const healthRouterModule = await import('./server/routes/health.js');
+const whatsappRouterModule = await import('./server/routes/whatsapp.js');
 
 const corsMiddleware = corsMiddlewareModule.default;
 const errorHandler = errorHandlerModule.default;
@@ -44,6 +45,7 @@ const designersRouter = designersRouterModule.default;
 const faqsRouter = faqsRouterModule.default;
 const settingsRouter = settingsRouterModule.default;
 const healthRouter = healthRouterModule.default;
+const whatsappRouter = whatsappRouterModule.default;
 
 const app = express.default();
 const PORT = process.env.PORT || 3000;
@@ -67,6 +69,7 @@ app.use('/api/designers', designersRouter);
 app.use('/api/faqs', faqsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/whatsapp', whatsappRouter);
 
 // Root health check
 app.get('/health', (req, res) => {

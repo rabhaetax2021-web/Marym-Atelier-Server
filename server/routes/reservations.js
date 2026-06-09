@@ -46,14 +46,6 @@ const toSnakeCasePayload = (obj = {}) => {
   return out;
 };
 
-// Helper: Send WhatsApp notification (placeholder - implement with actual service)
-const sendWhatsAppNotification = async (options) => {
-  // Implement actual WhatsApp service integration here
-  // For now, just log it
-  console.log('📱 WhatsApp notification would be sent:', options);
-  return { success: true };
-};
-
 // GET /api/reservations - List all reservations
 router.get('/', async (req, res) => {
   try {
@@ -135,32 +127,7 @@ router.patch('/', async (req, res) => {
     const result = await pool.query(query, values);
     const row = result.rows[0] || {};
 
-    // Send WhatsApp notification if status changed to confirmed
-    try {
-      const newStatus = row.status || snake.status;
-      if (String(newStatus) === 'confirmed' && String(prevStatus) !== 'confirmed') {
-        console.log('🔔 Reservation status changed to confirmed, sending WhatsApp notify for id=', id);
-        
-        let dress = null;
-        try {
-          const dressId = row.dress_id;
-          if (dressId) {
-            const dressQuery = 'SELECT id, name, price FROM dresses WHERE id = $1';
-            const dressResult = await pool.query(dressQuery, [dressId]);
-            dress = dressResult.rows[0] || null;
-          }
-        } catch (e) {
-          console.warn('Could not fetch dress for notify:', e);
-        }
-
-        const reservationCamel = toCamelCaseRow(row);
-        const notifyResult = await sendWhatsAppNotification({ action: 'confirm', reservation: reservationCamel, dress });
-        console.log('🔔 sendWhatsAppNotification result:', notifyResult);
-      }
-    } catch (notifyErr) {
-      console.error('Failed to send confirmation WhatsApp notification:', notifyErr);
-      // Continue - do not fail the update because of notification issues
-    }
+    console.log('✅ Reservation updated successfully:', toCamelCaseRow(row));
 
     return res.status(200).json(toCamelCaseRow(row));
   } catch (error) {
