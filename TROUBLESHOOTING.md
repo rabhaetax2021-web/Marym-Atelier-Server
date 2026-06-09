@@ -586,6 +586,170 @@ ps aux | grep node
 
 ---
 
+## 11. PostgreSQL Authentication Error - "password authentication failed for user 'root'"
+
+### Symptom: Frontend shows error message when loading data
+```
+Error: فشل تحميل الفساتين من قاعدة البيانات. — details: password authentication failed for user "root"
+```
+
+Or in browser console:
+```
+Failed to load data from Supabase: Error: password authentication failed for user "root"
+```
+
+### Root Cause
+The application is trying to authenticate to PostgreSQL as "root" instead of the correct user "app". This typically happens because:
+1. `.env.production` has wrong `DB_USER` value
+2. PostgreSQL database doesn't have "app" user created
+3. The "app" user password doesn't match the `DB_PASSWORD` in `.env`
+4. Connecting to Supabase but credentials are wrong
+
+### Quick Fix
+
+**Step 1: Verify which user should be used**
+```bash
+# For self-hosted PostgreSQL:
+# Expected: DB_USER=app with DB_PASSWORD=Marym2026
+
+# For Supabase: 
+# Expected: DB_USER=postgres with your Supabase password
+```
+
+**Step 2: Check current configuration**
+```bash
+# Check what's in .env.production
+cat /home/marymatelier/app/.env.production | grep DB_
+
+# Should show:
+# DB_HOST=localhost (or your VPS IP)
+# DB_PORT=5432
+# DB_NAME=marymatelier
+# DB_USER=app
+# DB_PASSWORD=Marym2026
+# DB_SSL=false (or true for Supabase)
+```
+
+**Step 3: Verify database user exists**
+```bash
+# Connect as PostgreSQL superuser
+sudo -u postgres psql
+
+# List all users
+\du
+
+# Should show "app" in the list
+# If not, create it:
+CREATE USER app WITH PASSWORD 'Marym2026';
+GRANT ALL PRIVILEGES ON DATABASE marymatelier TO app;
+
+\q
+```
+
+**Step 4: Test the connection**
+```bash
+# Test connection with app user
+PGPASSWORD=Marym2026 psql -h localhost -U app -d marymatelier -c "SELECT 1;"
+
+# Should return: (returns)
+# ?column? 
+# ----------
+#        1
+# (1 row)
+```
+
+**Step 5: Restart application**
+```bash
+# Restart the app
+pm2 restart marymatelier
+
+# Watch logs for errors
+pm2 logs marymatelier
+
+# Should see: "✓ Database pool initialized successfully (user: app)"
+```
+
+### Alternative: If using Supabase
+
+If your `.env.production` points to Supabase (db.xxxxx.supabase.co):
+
+```bash
+# Get your Supabase PostgreSQL credentials from:
+# Project Settings → Database
+
+# Update .env.production:
+nano /home/marymatelier/app/.env.production
+
+# Set these values:
+DB_HOST=db.xxxxx.supabase.co
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=<your_supabase_password>
+DB_SSL=true
+
+# Save and restart
+pm2 restart marymatelier
+pm2 logs marymatelier
+```
+
+### Complete Diagnostic Script
+
+Run this to diagnose the issue:
+
+```bash
+#!/bin/bash
+echo "=== Marym Atelier Database Diagnostics ==="
+echo ""
+
+# Check .env configuration
+echo "1. Checking .env.production..."
+DB_HOST=$(grep ^DB_HOST /home/marymatelier/app/.env.production | cut -d= -f2)
+DB_USER=$(grep ^DB_USER /home/marymatelier/app/.env.production | cut -d= -f2)
+DB_NAME=$(grep ^DB_NAME /home/marymatelier/app/.env.production | cut -d= -f2)
+echo "   Host: $DB_HOST"
+echo "   User: $DB_USER"
+echo "   Database: $DB_NAME"
+echo ""
+
+# Check PostgreSQL status
+echo "2. Checking PostgreSQL status..."
+sudo systemctl status postgresql --no-pager
+echo ""
+
+# Check if database exists
+echo "3. Checking if database exists..."
+sudo -u postgres psql -l | grep marymatelier
+echo ""
+
+# Check if user exists
+echo "4. Checking if user 'app' exists..."
+sudo -u postgres psql -c "\du" | grep app
+echo ""
+
+# Try to connect as app user
+echo "5. Testing connection as 'app' user..."
+PGPASSWORD=Marym2026 psql -h localhost -U app -d marymatelier -c "SELECT version();" 2>&1 | head -5
+echo ""
+
+# Check app status
+echo "6. Checking application status..."
+pm2 status marymatelier
+echo ""
+
+# Check recent logs
+echo "7. Recent application logs..."
+pm2 logs marymatelier --lines 20 --err
+```
+
+Save as `/home/marymatelier/diagnose.sh` and run:
+```bash
+chmod +x /home/marymatelier/diagnose.sh
+./diagnose.sh
+```
+
+---
+
 ## 🆘 Emergency Commands
 
 When everything is broken:
