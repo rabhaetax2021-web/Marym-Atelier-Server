@@ -8,28 +8,50 @@ const __dirname = path.dirname(__filename);
 // Load environment-specific .env file
 const nodeEnv = process.env.NODE_ENV || 'development';
 const envFile = path.resolve(__dirname, `.env.${nodeEnv}`);
-dotenv.config({ path: envFile });
+console.log(`📝 Loading environment from: ${envFile}`);
+const result1 = dotenv.config({ path: envFile });
+if (result1.error) {
+  console.warn(`⚠️  Error loading ${envFile}: ${result1.error.message}`);
+} else {
+  console.log(`✓ Loaded ${envFile}`);
+}
 
 // Fallback to .env if environment-specific file doesn't exist
-dotenv.config();
+const result2 = dotenv.config();
+if (!result2.error) {
+  console.log(`✓ Also loaded .env`);
+}
 
-import express from 'express';
-import corsMiddleware from './server/middleware/cors.js';
-import errorHandler from './server/utils/errors.js';
-import dressesRouter from './server/routes/dresses.js';
-import reservationsRouter from './server/routes/reservations.js';
-import designersRouter from './server/routes/designers.js';
-import faqsRouter from './server/routes/faqs.js';
-import settingsRouter from './server/routes/settings.js';
-import healthRouter from './server/routes/health.js';
+console.log(`DB_USER: ${process.env.DB_USER ? '(set)' : '(not set)'}`);
+console.log(`DB_PASSWORD: ${process.env.DB_PASSWORD ? '(set)' : '(not set)'}`);
 
-const app = express();
+// Use dynamic imports to load modules AFTER dotenv.config()
+const express = await import('express');
+const corsMiddlewareModule = await import('./server/middleware/cors.js');
+const errorHandlerModule = await import('./server/utils/errors.js');
+const dressesRouterModule = await import('./server/routes/dresses.js');
+const reservationsRouterModule = await import('./server/routes/reservations.js');
+const designersRouterModule = await import('./server/routes/designers.js');
+const faqsRouterModule = await import('./server/routes/faqs.js');
+const settingsRouterModule = await import('./server/routes/settings.js');
+const healthRouterModule = await import('./server/routes/health.js');
+
+const corsMiddleware = corsMiddlewareModule.default;
+const errorHandler = errorHandlerModule.default;
+const dressesRouter = dressesRouterModule.default;
+const reservationsRouter = reservationsRouterModule.default;
+const designersRouter = designersRouterModule.default;
+const faqsRouter = faqsRouterModule.default;
+const settingsRouter = settingsRouterModule.default;
+const healthRouter = healthRouterModule.default;
+
+const app = express.default();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(corsMiddleware);
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.default.json({ limit: '50mb' }));
+app.use(express.default.urlencoded({ limit: '50mb', extended: true }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -83,4 +105,3 @@ process.on('SIGINT', () => {
 });
 
 export default app;
-
