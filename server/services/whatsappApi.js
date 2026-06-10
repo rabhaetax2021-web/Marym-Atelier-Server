@@ -243,20 +243,27 @@ export async function notifyAdminOrSales(options) {
   if (targetNumbers.length === 0) {
     console.warn(`⚠️  No ${recipientType} WhatsApp number configured`);
     return { success: false, skipped: true, reason: `No ${recipientType} number`, count: 0 };
+  }
 
+  // Send to all target numbers
+  const results = [];
+  for (const targetNumber of targetNumbers) {
+    try {
+      const modifiedOptions = {
+        ...options,
+        reservation: {
           ...options.reservation,
-      const body = buildWhatsAppMessage({ reservation, dress, action }, process.env.API_URL || '');
-      const to = formatPhoneNumber(reservation?.clientPhone || '');
-
-      return {
-        messaging_product: 'whatsapp',
-        to,
-        type: 'text',
-        text: { body },
+          clientPhone: targetNumber,
+        },
       };
-        phone: targetNumber, 
-        success: false, 
-        error: error.message 
+      const result = await sendWhatsAppMessage(modifiedOptions);
+      results.push({ phone: targetNumber, ...result });
+    } catch (error) {
+      console.error(`Failed to notify ${recipientType} (${targetNumber}):`, error.message);
+      results.push({
+        phone: targetNumber,
+        success: false,
+        error: error.message,
       });
     }
   }
