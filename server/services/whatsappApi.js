@@ -36,13 +36,23 @@ export function formatPhoneNumber(phone) {
  * @returns {boolean}
  */
 export function isValidEgyptianPhone(phone) {
-  let formatted = formatPhoneNumber(phone);
-  // Allow numbers with country code (20) or local 10-digit numbers
-  if (formatted.startsWith('20') && formatted.length === 12) {
-    formatted = formatted.slice(2);
+  if (!phone) return false;
+  // Normalize input: remove non-digits
+  let digits = phone.replace(/\D/g, '');
+
+  // Remove leading international 00 if present
+  if (digits.startsWith('00')) digits = digits.slice(2);
+
+  // If starts with single leading 0 (local format e.g. 010xxxxxxxx), strip it
+  if (digits.startsWith('0') && digits.length === 11) digits = digits.slice(1);
+
+  // If now 10-digit local number, prefix with country code 20
+  if (digits.length === 10 && /^(10|11|12|15)\d{8}$/.test(digits)) {
+    digits = '20' + digits;
   }
-  // Egyptian: 10 digits, starts with 10, 11, 12, or 15
-  return /^(10|11|12|15)\d{8}$/.test(formatted);
+
+  // Accept only 12-digit numbers starting with country code 20 and valid mobile prefixes
+  return /^(20)(10|11|12|15)\d{8}$/.test(digits);
 }
 
 export function buildWhatsAppMessage({ reservation, dress, action }, origin = '') {
@@ -163,13 +173,29 @@ export async function sendWhatsAppMessage(options) {
     throw error;
   }
 
-  // Validate phone number format
-  if (!isValidEgyptianPhone(reservation.clientPhone)) {
+  // Normalize and validate phone number; WhatsApp expects country code (no +)
+  const rawPhone = String(reservation.clientPhone || '');
+  const digitsOnly = rawPhone.replace(/\D/g, '');
+  let normalized = digitsOnly;
+  if (normalized.startsWith('00')) normalized = normalized.slice(2);
+  if (normalized.startsWith('0') && normalized.length === 11) normalized = normalized.slice(1);
+  if (normalized.length === 10) normalized = '20' + normalized;
+
+  if (!/^(20)(10|11|12|15)\d{8}$/.test(normalized)) {
     const error = new Error(`Invalid Egyptian phone number: ${reservation.clientPhone}`);
     error.code = 'INVALID_PHONE_FORMAT';
     error.statusCode = 400;
     throw error;
   }
+
+  // Replace clientPhone in options with normalized value so downstream uses correct format
+  options = {
+    ...options,
+    reservation: {
+      ...options.reservation,
+      clientPhone: normalized,
+    },
+  };
 
   const messageBody = formatWhatsAppMessage(options);
   const url = `${WHATSAPP_API_BASE}/${phoneNumberId}${WHATSAPP_SEND_MESSAGE_ENDPOINT}`;
