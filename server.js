@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,6 +97,19 @@ if (shouldApplySchema) {
   }
 } else {
   console.log('Skipping DB schema application on startup (disabled for production by default)');
+}
+
+// Serve frontend static files if a production build exists
+const staticDir = path.resolve(__dirname, 'dist');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(staticDir)) {
+  console.log('Serving frontend static files from:', staticDir);
+  app.use(express.default.static(staticDir));
+  // SPA fallback for non-API routes
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+} else {
+  console.log('No built frontend found at', staticDir);
 }
 
 // Root health check
