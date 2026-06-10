@@ -172,4 +172,39 @@ router.post('/notify-reservation', async (req, res) => {
   }
 });
 
+// Debug endpoint: send a raw test message to a specified number and return API response
+router.post('/debug', async (req, res) => {
+  try {
+    const { to, text } = req.body || {};
+    const validation = validateWhatsAppEnv();
+    if (!validation.isValid) return jsonError(res, 500, 'WhatsApp not configured', `Missing: ${validation.missing.join(', ')}`);
+
+    if (!to) return jsonError(res, 400, 'Missing `to` phone number in body');
+
+    const accessToken = validation.credentials.accessToken;
+    const phoneNumberId = validation.credentials.phoneNumberId;
+    const messageBody = {
+      messaging_product: 'whatsapp',
+      to: to.replace(/\D/g, ''),
+      type: 'text',
+      text: { body: text || 'Debug message from server' },
+    };
+
+    const url = `${process.env.WHATSAPP_API_BASE || 'https://graph.facebook.com/v17.0'}/${phoneNumberId}/messages`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(messageBody),
+    });
+    const body = await resp.text();
+    const parsed = (() => {
+      try { return JSON.parse(body); } catch (e) { return body; }
+    })();
+    return res.status(200).json({ ok: resp.ok, status: resp.status, data: parsed });
+  } catch (err) {
+    console.error('WhatsApp debug error:', err);
+    return jsonError(res, 500, 'WhatsApp debug failed', err.message || String(err));
+  }
+});
+
 export default router;
