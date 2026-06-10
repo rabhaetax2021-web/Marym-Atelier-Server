@@ -15,12 +15,22 @@ const toCamelCaseRow = (row) => {
   };
 };
 
-// Helper: Convert camelCase to DB snake_case
+// Helper: Convert camelCase keys to DB snake_case (e.g. createdAt -> created_at)
 const toSnakeCasePayload = (payload) => {
-  const out = { ...payload };
-  if ('bigSize' in out) {
-    out.big_size = out.bigSize;
-    delete out.bigSize;
+  const out = {};
+  for (const [key, val] of Object.entries(payload || {})) {
+    if (key === 'bigSize') {
+      out.big_size = val;
+      continue;
+    }
+    // If already snake_case, keep as-is
+    if (key.includes('_')) {
+      out[key] = val;
+      continue;
+    }
+    // Convert camelCase to snake_case
+    const snake = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    out[snake] = val;
   }
   return out;
 };
@@ -57,7 +67,8 @@ async function handleDressCreation(payload, req, res) {
       }
       try {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
-        snake.images = JSON.stringify(imagesArray);
+          // store as actual array so Postgres jsonb column remains an array
+          snake.images = imagesArray;
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
       }
@@ -187,7 +198,8 @@ router.patch('/', async (req, res) => {
       let imagesArray = [];
       try {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
-        snake.images = JSON.stringify(imagesArray);
+        // store as actual array so Postgres jsonb column remains an array
+        snake.images = imagesArray;
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
       }
