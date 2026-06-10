@@ -55,9 +55,10 @@ export function isValidEgyptianPhone(phone) {
   return /^(20)(10|11|12|15)\d{8}$/.test(digits);
 }
 
-export function buildWhatsAppMessage({ reservation, dress, action }, origin = '') {
+export function buildWhatsAppMessage({ reservation, dress, action, forClient = false }, origin = '') {
   const isConfirmed = action === 'confirm';
-  const title = isConfirmed ? '✅ حجز مؤكد' : '🔔 حجز جديد';
+  const baseTitle = isConfirmed ? '✅ حجز مؤكد' : '🔔 حجز جديد';
+  const title = forClient ? baseTitle.replace('حجز', 'حجزك') : baseTitle;
 
   // Map placeholders as requested
   const placeholder1 = title;
@@ -88,7 +89,21 @@ export function buildWhatsAppMessage({ reservation, dress, action }, origin = ''
     `[🆔] *رقم الطلب:* ${placeholder7}`,
   ];
 
-  return lines.join('\n');
+  // Add a direct dress link so recipients can open the dress page (and access the QR modal on the site)
+  try {
+    const maybeOrigin = (origin && String(origin).replace(/\/$/, ''))
+      || (process.env.SITE_ORIGIN && String(process.env.SITE_ORIGIN).replace(/\/$/, ''))
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/\/$/, '')}` : '')
+      || '';
+    if (maybeOrigin) {
+      const dressPath = `/dress/${encodeURIComponent(reservation.dressId || dress?.id || '')}`;
+      lines.push('', `🔗 ${maybeOrigin}${dressPath}`);
+    }
+  } catch (err) {
+    console.warn('Failed to build dress origin link for WhatsApp message', err);
+  }
+
+  return lines.filter(Boolean).join('\n');
 }
 
 /**
@@ -197,7 +212,26 @@ export async function sendWhatsAppMessage(options) {
     },
   };
 
-  const messageBody = formatWhatsAppMessage(options);
+  const { recipientType } = options || {};
+
+  let messageBody;
+  if (recipientType === 'admin' || recipientType === 'sales') {
+    const adminText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action }, options.origin);
+    messageBody = {
+      messaging_product: 'whatsapp',
+      to: formatPhoneNumber(options.reservation.clientPhone),
+      type: 'text',
+      text: { body: adminText },
+    };
+  } else {
+    const clientText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action, forClient: true }, options.origin);
+    messageBody = {
+      messaging_product: 'whatsapp',
+      to: formatPhoneNumber(options.reservation.clientPhone),
+      type: 'text',
+      text: { body: clientText },
+    };
+  }
   const url = `${WHATSAPP_API_BASE}/${phoneNumberId}${WHATSAPP_SEND_MESSAGE_ENDPOINT}`;
 
   try {
@@ -281,6 +315,7 @@ export async function notifyAdminOrSales(options) {
           ...options.reservation,
           clientPhone: targetNumber,
         },
+        recipientType,
       };
       const result = await sendWhatsAppMessage(modifiedOptions);
       results.push({ phone: targetNumber, ...result });
