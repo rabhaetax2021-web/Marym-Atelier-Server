@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import pool from '../config/db.js';
 
 const router = Router();
 const storage = multer.memoryStorage();
@@ -71,9 +72,25 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     const publicUrl = MINIO_PUBLIC_URL
       ? `${MINIO_PUBLIC_URL.replace(/\/$/, '')}/${MINIO_BUCKET}/${remotePath}`
-      : null;
+      : `${MINIO_BUCKET}/${remotePath}`;
 
-    return res.status(200).json({ ok: true, url: publicUrl });
+    // If a dressId is provided, insert into dress_photos and return the photo id
+    const dressId = (req.body && req.body.dressId) || req.query?.dressId;
+    let photoId = null;
+    if (dressId) {
+      try {
+        // determine next position
+        const posRes = await pool.query('SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM dress_photos WHERE dress_id = $1', [dressId]);
+        const nextPos = (posRes.rows[0] && posRes.rows[0].next_pos) || 0;
+        const insertRes = await pool.query('INSERT INTO dress_photos (dress_id, url, position) VALUES ($1,$2,$3) RETURNING id', [dressId, publicUrl, nextPos]);
+        photoId = insertRes.rows[0]?.id || null;
+      } catch (err) {
+        console.error('Failed to insert dress_photos in upload route:', err);
+        // continue — return upload url even if DB insert failed
+      }
+    }
+
+    return res.status(200).json({ ok: true, url: publicUrl, photoId });
   } catch (err) {
     console.error('POST /api/upload-image error:', err);
     return res.status(500).json({ ok: false, error: String(err) });

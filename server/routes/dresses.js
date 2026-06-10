@@ -67,8 +67,8 @@ async function handleDressCreation(payload, req, res) {
       }
       try {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
-          // store as actual array so Postgres jsonb column remains an array
-          snake.images = imagesArray;
+          // store as JSON text so pg driver and Postgres jsonb accept it reliably
+          snake.images = JSON.stringify(imagesArray);
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
       }
@@ -168,6 +168,13 @@ router.get('/', async (req, res) => {
     const result = await pool.query(query);
     const normalized = (result.rows || []).map((row) => {
       const r = toCamelCaseRow(row);
+      if (typeof r.images === 'string') {
+        try {
+          r.images = JSON.parse(r.images);
+        } catch (e) {
+          r.images = [];
+        }
+      }
       if (!Array.isArray(r.images)) r.images = [];
       return r;
     });
@@ -198,8 +205,8 @@ router.patch('/', async (req, res) => {
       let imagesArray = [];
       try {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
-        // store as actual array so Postgres jsonb column remains an array
-        snake.images = imagesArray;
+        // store as JSON text so pg driver and Postgres jsonb accept it reliably
+        snake.images = JSON.stringify(imagesArray);
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
       }
