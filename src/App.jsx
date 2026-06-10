@@ -85,7 +85,10 @@ function App() {
 
   const [qrDresses, setQrDresses] = useState([]);
   const handleOpenQR = (dresses) => setQrDresses(Array.isArray(dresses) ? dresses : []);
-  const handleCloseQR = () => setQrDresses([]);
+  const handleCloseQR = () => {
+    setQrDresses([]);
+    navigate('catalog');
+  };
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {

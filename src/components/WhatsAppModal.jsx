@@ -102,6 +102,14 @@ export default function WhatsAppModal({
     // Close only the QR modal and clear its dresses, keep the WhatsApp modal open
     setShowQRModal(false);
     setQrDresses([]);
+    // Close the WhatsApp modal and navigate back to the main store
+    try {
+      onClose();
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } catch (e) {
+      /* ignore */
+    }
   };
 
   const handleSubmit = async (e) => {
