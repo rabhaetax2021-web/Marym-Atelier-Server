@@ -4,7 +4,7 @@ module.exports = {
       name: 'marymatelier',
       script: './server.js',
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
@@ -25,7 +25,10 @@ module.exports = {
       max_memory_restart: '1G',
       watch: false,
       ignore_watch: ['node_modules', 'dist', 'logs'],
-      exp_backoff_restart_delay: 100,
+      // Increase backoff so PM2 doesn't rapidly restart on repeated failures
+      exp_backoff_restart_delay: 5000,
+      // Extra delay before restarting (ms)
+      restart_delay: 5000,
     },
   ],
 };

@@ -80,12 +80,22 @@ app.use('/api/upload-image', uploadRouter);
 app.use('/api/notify-reservation', notifyRouter);
 
 // Ensure DB schema is present (creates tables/indexes if missing)
-// Ensure DB schema is present (creates tables/indexes if missing)
-// Controlled via APPLY_DB_SCHEMA env var. Set to 'true' to apply on startup.
-if (process.env.APPLY_DB_SCHEMA === 'true') {
-  await ensureSchema();
+// In production we do NOT apply schema automatically unless explicitly forced.
+// Controlled via APPLY_DB_SCHEMA env var. Set to 'true' to apply on non-production.
+// To force applying in production (one-off), set FORCE_APPLY_DB_SCHEMA='true'.
+let shouldApplySchema = process.env.APPLY_DB_SCHEMA === 'true' && process.env.NODE_ENV !== 'production';
+if (process.env.FORCE_APPLY_DB_SCHEMA === 'true') {
+  shouldApplySchema = true;
+}
+if (shouldApplySchema) {
+  try {
+    await ensureSchema();
+  } catch (err) {
+    console.error('Error while applying DB schema (caught in startup):', err && err.message ? err.message : err);
+    // Do not exit here; log and continue. Repeated failures should be fixed at the DB level.
+  }
 } else {
-  console.log('Skipping DB schema application on startup (APPLY_DB_SCHEMA not set to true)');
+  console.log('Skipping DB schema application on startup (disabled for production by default)');
 }
 
 // Root health check
@@ -102,8 +112,8 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Start server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Marym Atelier Server running on port ${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Marym Atelier Server running on 0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
@@ -122,6 +132,24 @@ process.on('SIGINT', () => {
     console.log('Server closed');
     process.exit(0);
   });
+});
+
+// Safer process-level handlers to avoid noisy crash-restart loops in PM2
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason);
+  // Do not exit automatically; leave the process running for observability.
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err && err.stack ? err.stack : err);
+  // Attempt graceful shutdown; if that fails, let PM2 restart after investigation.
+  try {
+    server.close(() => {
+      console.log('Server closed after uncaught exception');
+    });
+  } catch (e) {
+    console.error('Error while closing server after uncaught exception:', e);
+  }
 });
 
 export default app;
