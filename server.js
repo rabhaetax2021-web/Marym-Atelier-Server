@@ -103,7 +103,12 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true, message: 'Server is running' });
 });
 
-// 404 handler
+// Root path (for probes or direct requests)
+app.get('/', (req, res) => {
+  res.status(200).json({ ok: true, message: 'Server is running' });
+});
+
+// 404 handler1
 app.use((req, res) => {
   res.status(404).json({ ok: false, error: 'Not found' });
 });
