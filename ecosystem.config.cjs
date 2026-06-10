@@ -4,7 +4,7 @@ module.exports = {
       name: 'marymatelier',
       script: './server.js',
       instances: 1,
-      exec_mode: 'fork',
+      exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
