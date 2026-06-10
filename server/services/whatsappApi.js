@@ -36,7 +36,11 @@ export function formatPhoneNumber(phone) {
  * @returns {boolean}
  */
 export function isValidEgyptianPhone(phone) {
-  const formatted = formatPhoneNumber(phone);
+  let formatted = formatPhoneNumber(phone);
+  // Allow numbers with country code (20) or local 10-digit numbers
+  if (formatted.startsWith('20') && formatted.length === 12) {
+    formatted = formatted.slice(2);
+  }
   // Egyptian: 10 digits, starts with 10, 11, 12, or 15
   return /^(10|11|12|15)\d{8}$/.test(formatted);
 }
