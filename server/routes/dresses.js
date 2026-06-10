@@ -55,6 +55,12 @@ async function handleDressCreation(payload, req, res) {
       if (hasDataUrl) {
         return jsonError(res, 400, 'Please upload images via the upload endpoint; raw base64 data is not allowed.');
       }
+      // Ensure JSONB column receives a JSON string
+      try {
+        snake.images = JSON.stringify(snake.images.map((img) => (typeof img === 'string' ? img : String(img))));
+      } catch (e) {
+        return jsonError(res, 400, 'Invalid images payload.');
+      }
     }
 
     const columns = Object.keys(snake);
@@ -156,6 +162,11 @@ router.patch('/', async (req, res) => {
       const hasDataUrl = snake.images.some((img) => typeof img === 'string' && img.startsWith('data:'));
       if (hasDataUrl) {
         return jsonError(res, 400, 'Please upload images via the upload endpoint; raw base64 data is not allowed.');
+      }
+      try {
+        snake.images = JSON.stringify(snake.images.map((img) => (typeof img === 'string' ? img : String(img))));
+      } catch (e) {
+        return jsonError(res, 400, 'Invalid images payload.');
       }
     }
 
