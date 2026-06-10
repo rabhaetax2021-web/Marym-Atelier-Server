@@ -48,16 +48,16 @@ router.post('/', async (req, res) => {
 async function handleDressCreation(payload, req, res) {
   try {
     const snake = toSnakeCasePayload(payload);
-    
     // Validate images - no data URLs
+    let imagesArray = [];
     if (Array.isArray(snake.images)) {
       const hasDataUrl = snake.images.some((img) => typeof img === 'string' && img.startsWith('data:'));
       if (hasDataUrl) {
         return jsonError(res, 400, 'Please upload images via the upload endpoint; raw base64 data is not allowed.');
       }
-      // Ensure JSONB column receives a JSON string
       try {
-        snake.images = JSON.stringify(snake.images.map((img) => (typeof img === 'string' ? img : String(img))));
+        imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
+        snake.images = JSON.stringify(imagesArray);
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
       }
@@ -67,6 +67,15 @@ async function handleDressCreation(payload, req, res) {
     const values = Object.values(snake);
     const placeholders = columns.map((_, i) => `$${i + 1}`).join(',');
 
+    // Ensure designer exists (upsert) when provided
+    if (snake.designer) {
+      try {
+        await pool.query(`INSERT INTO designers (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, [snake.designer]);
+      } catch (e) {
+        console.error('Failed to upsert designer:', e);
+      }
+    }
+
     const query = `
       INSERT INTO dresses (${columns.join(',')})
       VALUES (${placeholders})
@@ -75,6 +84,18 @@ async function handleDressCreation(payload, req, res) {
 
     const result = await pool.query(query, values);
     const row = result.rows[0] || {};
+    // If images were provided, insert into dress_photos table
+    if (imagesArray.length > 0) {
+      try {
+        const insertPromises = imagesArray.map((url, idx) => {
+          const q = 'INSERT INTO dress_photos (dress_id, url, position) VALUES ($1,$2,$3)';
+          return pool.query(q, [row.id, url, idx]);
+        });
+        await Promise.all(insertPromises);
+      } catch (err) {
+        console.error('Failed to insert dress_photos:', err);
+      }
+    }
     return res.status(201).json(toCamelCaseRow(row));
   } catch (error) {
     console.error('POST /api/dresses error:', error);
@@ -163,10 +184,30 @@ router.patch('/', async (req, res) => {
       if (hasDataUrl) {
         return jsonError(res, 400, 'Please upload images via the upload endpoint; raw base64 data is not allowed.');
       }
+      let imagesArray = [];
       try {
-        snake.images = JSON.stringify(snake.images.map((img) => (typeof img === 'string' ? img : String(img))));
+        imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
+        snake.images = JSON.stringify(imagesArray);
       } catch (e) {
         return jsonError(res, 400, 'Invalid images payload.');
+      }
+      // Sync dress_photos: remove existing and insert new
+      const dressId = id;
+      try {
+        await pool.query('DELETE FROM dress_photos WHERE dress_id = $1', [dressId]);
+        const insertPromises = imagesArray.map((url, idx) => pool.query('INSERT INTO dress_photos (dress_id, url, position) VALUES ($1,$2,$3)', [dressId, url, idx]));
+        await Promise.all(insertPromises);
+      } catch (err) {
+        console.error('Failed to sync dress_photos on update:', err);
+      }
+    }
+
+    // Ensure designer exists (upsert) when provided
+    if (snake.designer) {
+      try {
+        await pool.query(`INSERT INTO designers (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`, [snake.designer]);
+      } catch (e) {
+        console.error('Failed to upsert designer:', e);
       }
     }
 

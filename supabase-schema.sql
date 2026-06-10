@@ -26,6 +26,19 @@ create table if not exists dresses (
 create index if not exists dresses_category_idx on dresses(category);
 create index if not exists dresses_designer_idx on dresses(designer);
 
+-- Table to store individual photos for dresses (supports multiple photos per dress)
+create table if not exists dress_photos (
+  id bigserial primary key,
+  dress_id text references dresses(id) on delete cascade,
+  url text not null,
+  position integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists dress_photos_dress_id_idx on dress_photos(dress_id);
+create index if not exists dress_photos_position_idx on dress_photos(position);
+
 create table if not exists reservations (
   id text primary key,
   dress_id text references dresses(id) on delete set null,

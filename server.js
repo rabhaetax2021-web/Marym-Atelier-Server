@@ -48,6 +48,8 @@ const settingsRouter = settingsRouterModule.default;
 const healthRouter = healthRouterModule.default;
 const whatsappRouter = whatsappRouterModule.default;
 const uploadRouter = uploadRouterModule.default;
+const initDbModule = await import('./server/utils/initDb.js');
+const ensureSchema = initDbModule.default;
 
 const app = express.default();
 const PORT = process.env.PORT || 3000;
@@ -73,6 +75,9 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/upload-image', uploadRouter);
+
+// Ensure DB schema is present (creates tables/indexes if missing)
+await ensureSchema();
 
 // Root health check
 app.get('/health', (req, res) => {
