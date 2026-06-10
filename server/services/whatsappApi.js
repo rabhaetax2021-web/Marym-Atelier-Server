@@ -45,6 +45,42 @@ export function isValidEgyptianPhone(phone) {
   return /^(10|11|12|15)\d{8}$/.test(formatted);
 }
 
+export function buildWhatsAppMessage({ reservation, dress, action }, origin = '') {
+  const isConfirmed = action === 'confirm';
+  const title = isConfirmed ? '✅ حجز مؤكد' : '🔔 حجز جديد';
+
+  // Map placeholders as requested
+  const placeholder1 = title;
+  const dressName = reservation.dressName || dress?.name || '—';
+  const dressId = reservation.dressId || dress?.id || '—';
+  const placeholder2 = `${dressName} — كود ${dressId}${dress?.price ? ` — ${dress.price} ج.م` : ''}`;
+  const clientName = reservation.clientName || '—';
+  const clientPhone = reservation.clientPhone || '—';
+  const clientWeight = reservation.weight !== undefined && reservation.weight !== null ? String(reservation.weight) : '—';
+  const clientHeight = reservation.height !== undefined && reservation.height !== null ? String(reservation.height) : '—';
+  const weightHeightSuffix = (clientWeight !== '—' || clientHeight !== '—') ? ` — وزن: ${clientWeight} كجم / طول: ${clientHeight} سم` : '';
+  const placeholder4 = `${clientName} — ${clientPhone}${weightHeightSuffix}`;
+  const trialDate = reservation.trialDate || '—';
+  const time = reservation.time || '';
+  const rentDate = reservation.rentDate || '—';
+  const placeholder5 = `تاريخ التجربة ${trialDate} الساعة ${time ? ` ${time}` : ''} /تاريخ الايجار ${rentDate}`;
+  const placeholder6 = reservation.notes || '—';
+  const placeholder7 = reservation.id || '—';
+
+  const lines = [
+    '*MaryMatelier*',
+    `${placeholder1}`,
+    '',
+    `[👗] *بيانات الفستان:* ${placeholder2}`,
+    `[👤] *بيانات العميل:* ${placeholder4}`,
+    `[📅] *مواعيد القياس والإيجار:* ${placeholder5}`,
+    `[📝] *ملاحظات:* ${placeholder6}`,
+    `[🆔] *رقم الطلب:* ${placeholder7}`,
+  ];
+
+  return lines.join('\n');
+}
+
 /**
  * Constructs WhatsApp message template based on notification type
  * @param {Object} options - { action, reservation, dress }
@@ -207,24 +243,17 @@ export async function notifyAdminOrSales(options) {
   if (targetNumbers.length === 0) {
     console.warn(`⚠️  No ${recipientType} WhatsApp number configured`);
     return { success: false, skipped: true, reason: `No ${recipientType} number`, count: 0 };
-  }
 
-  // Send to all target numbers
-  const results = [];
-  for (const targetNumber of targetNumbers) {
-    try {
-      const modifiedOptions = {
-        ...options,
-        reservation: {
           ...options.reservation,
-          clientPhone: targetNumber,
-        },
+      const body = buildWhatsAppMessage({ reservation, dress, action }, process.env.API_URL || '');
+      const to = formatPhoneNumber(reservation?.clientPhone || '');
+
+      return {
+        messaging_product: 'whatsapp',
+        to,
+        type: 'text',
+        text: { body },
       };
-      const result = await sendWhatsAppMessage(modifiedOptions);
-      results.push({ phone: targetNumber, ...result });
-    } catch (error) {
-      console.error(`Failed to notify ${recipientType} (${targetNumber}):`, error.message);
-      results.push({ 
         phone: targetNumber, 
         success: false, 
         error: error.message 

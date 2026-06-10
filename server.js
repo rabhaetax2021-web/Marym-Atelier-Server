@@ -48,6 +48,8 @@ const settingsRouter = settingsRouterModule.default;
 const healthRouter = healthRouterModule.default;
 const whatsappRouter = whatsappRouterModule.default;
 const uploadRouter = uploadRouterModule.default;
+const notifyRouterModule = await import('./server/routes/notify.js');
+const notifyRouter = notifyRouterModule.default;
 const initDbModule = await import('./server/utils/initDb.js');
 const ensureSchema = initDbModule.default;
 
@@ -75,6 +77,7 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/upload-image', uploadRouter);
+app.use('/api/notify-reservation', notifyRouter);
 
 // Ensure DB schema is present (creates tables/indexes if missing)
 await ensureSchema();
