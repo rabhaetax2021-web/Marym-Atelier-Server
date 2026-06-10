@@ -107,6 +107,90 @@ export function buildWhatsAppMessage({ reservation, dress, action, forClient = f
 }
 
 /**
+ * Build a WhatsApp Cloud API template payload.
+ * Requires template names to be set in environment variables or passed via options.
+ * Falls back to null if no template name is configured for the given role/action.
+ */
+export function buildWhatsAppTemplatePayload({ action, reservation, dress, recipientType = 'client', forClient = false, origin = '', templateName: optTemplateName } = {}) {
+  const lang = process.env.WHATSAPP_TEMPLATE_LANG || 'ar';
+
+  // If a common template name is provided (optionally via env), prefer it for all recipients
+  const commonTemplate = process.env.WHATSAPP_TEMPLATE_COMMON || null;
+
+  const templateName = optTemplateName || commonTemplate || (() => {
+    if (forClient || recipientType === 'client') {
+      return action === 'new'
+        ? process.env.WHATSAPP_TEMPLATE_NEW_CLIENT
+        : process.env.WHATSAPP_TEMPLATE_CONFIRM_CLIENT;
+    }
+    // admin/sales
+    return action === 'new'
+      ? process.env.WHATSAPP_TEMPLATE_NEW_ADMIN
+      : process.env.WHATSAPP_TEMPLATE_CONFIRM_ADMIN;
+  })();
+
+  if (!templateName) return null;
+
+  const dressName = reservation.dressName || dress?.name || '—';
+  const dressId = reservation.dressId || dress?.id || '—';
+  const dressPrice = dress?.price ? `${dress.price} ج.م` : '';
+  const placeholder1 = action === 'confirm' ? '✅ حجز مؤكد' : '🔔 حجز جديد';
+  const placeholder2 = `${dressName} — كود ${dressId}${dressPrice ? ` — ${dressPrice}` : ''}`;
+  const clientName = reservation.clientName || '—';
+  const clientPhone = reservation.clientPhone || '—';
+  const clientWeight = reservation.weight !== undefined && reservation.weight !== null ? String(reservation.weight) : '—';
+  const clientHeight = reservation.height !== undefined && reservation.height !== null ? String(reservation.height) : '—';
+  const weightHeightSuffix = (clientWeight !== '—' || clientHeight !== '—') ? ` — وزن: ${clientWeight} كجم / طول: ${clientHeight} سم` : '';
+  const placeholder4 = `${clientName} — ${clientPhone}${weightHeightSuffix}`;
+  const trialDate = reservation.trialDate || '—';
+  const time = reservation.time || '';
+  const rentDate = reservation.rentDate || '—';
+  const placeholder5 = `تاريخ التجربة ${trialDate} الساعة ${time ? ` ${time}` : ''} /تاريخ الايجار ${rentDate}`;
+  const placeholder6 = reservation.notes || '—';
+  const placeholder7 = reservation.id || '—';
+
+  // try to build dress URL
+  let dressUrl = '';
+  try {
+    const maybeOrigin = (origin && String(origin).replace(/\/$/, ''))
+      || (process.env.SITE_ORIGIN && String(process.env.SITE_ORIGIN).replace(/\/$/, ''))
+      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/\/$/, '')}` : '')
+      || '';
+    if (maybeOrigin) {
+      const dressPath = `/dress/${encodeURIComponent(reservation.dressId || dress?.id || '')}`;
+      dressUrl = `${maybeOrigin}${dressPath}`;
+    }
+  } catch (e) {
+    dressUrl = '';
+  }
+
+  const bodyParams = [
+    { type: 'text', text: placeholder1 },
+    { type: 'text', text: placeholder2 },
+    { type: 'text', text: placeholder4 },
+    { type: 'text', text: placeholder5 },
+    { type: 'text', text: placeholder6 },
+    { type: 'text', text: placeholder7 },
+  ];
+  if (dressUrl) bodyParams.push({ type: 'text', text: dressUrl });
+
+  const components = [
+    { type: 'body', parameters: bodyParams },
+  ];
+
+  return {
+    messaging_product: 'whatsapp',
+    to: formatPhoneNumber(reservation.clientPhone),
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: lang },
+      components,
+    },
+  };
+}
+
+/**
  * Constructs WhatsApp message template based on notification type
  * @param {Object} options - { action, reservation, dress }
  * @returns {Object} Message body for WhatsApp API
@@ -213,24 +297,47 @@ export async function sendWhatsAppMessage(options) {
   };
 
   const { recipientType } = options || {};
+  // Decide whether to use templates. Options override env; default to true per request.
+  const useTemplates = (typeof options.useTemplate !== 'undefined')
+    ? Boolean(options.useTemplate)
+    : (process.env.WHATSAPP_USE_TEMPLATE ? process.env.WHATSAPP_USE_TEMPLATE === 'true' : true);
 
   let messageBody;
-  if (recipientType === 'admin' || recipientType === 'sales') {
-    const adminText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action }, options.origin);
-    messageBody = {
-      messaging_product: 'whatsapp',
-      to: formatPhoneNumber(options.reservation.clientPhone),
-      type: 'text',
-      text: { body: adminText },
-    };
-  } else {
-    const clientText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action, forClient: true }, options.origin);
-    messageBody = {
-      messaging_product: 'whatsapp',
-      to: formatPhoneNumber(options.reservation.clientPhone),
-      type: 'text',
-      text: { body: clientText },
-    };
+  if (useTemplates) {
+    const isAdminRecipient = recipientType === 'admin' || recipientType === 'sales';
+    const templatePayload = buildWhatsAppTemplatePayload({
+      action: options.action,
+      reservation: options.reservation,
+      dress: options.dress,
+      recipientType: isAdminRecipient ? recipientType : 'client',
+      forClient: !isAdminRecipient,
+      origin: options.origin,
+    });
+
+    if (templatePayload) {
+      messageBody = templatePayload;
+    }
+  }
+
+  // Fallback to text payload if template not used or not configured
+  if (!messageBody) {
+    if (recipientType === 'admin' || recipientType === 'sales') {
+      const adminText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action }, options.origin);
+      messageBody = {
+        messaging_product: 'whatsapp',
+        to: formatPhoneNumber(options.reservation.clientPhone),
+        type: 'text',
+        text: { body: adminText },
+      };
+    } else {
+      const clientText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action, forClient: true }, options.origin);
+      messageBody = {
+        messaging_product: 'whatsapp',
+        to: formatPhoneNumber(options.reservation.clientPhone),
+        type: 'text',
+        text: { body: clientText },
+      };
+    }
   }
   const url = `${WHATSAPP_API_BASE}/${phoneNumberId}${WHATSAPP_SEND_MESSAGE_ENDPOINT}`;
 
