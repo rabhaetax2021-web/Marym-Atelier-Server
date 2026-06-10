@@ -25,7 +25,13 @@ export default async function ensureSchema() {
     await pool.query(sql);
     console.log('Database schema ensured.');
   } catch (err) {
-    console.error('Failed to apply DB schema:', err.message || err);
+    console.error('Failed to apply DB schema:');
+    if (err && err.message) console.error('  message:', err.message);
+    if (err && err.code) console.error('  code:', err.code);
+    if (err && err.detail) console.error('  detail:', err.detail);
+    if (err && err.hint) console.error('  hint:', err.hint);
+    if (err && err.position) console.error('  position:', err.position);
+    if (err && err.stack) console.error('  stack:', err.stack);
     // Do not exit the process here; log and continue so server can start for debugging.
   }
 }

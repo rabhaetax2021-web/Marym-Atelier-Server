@@ -80,7 +80,13 @@ app.use('/api/upload-image', uploadRouter);
 app.use('/api/notify-reservation', notifyRouter);
 
 // Ensure DB schema is present (creates tables/indexes if missing)
-await ensureSchema();
+// Ensure DB schema is present (creates tables/indexes if missing)
+// Controlled via APPLY_DB_SCHEMA env var. Set to 'true' to apply on startup.
+if (process.env.APPLY_DB_SCHEMA === 'true') {
+  await ensureSchema();
+} else {
+  console.log('Skipping DB schema application on startup (APPLY_DB_SCHEMA not set to true)');
+}
 
 // Root health check
 app.get('/health', (req, res) => {
