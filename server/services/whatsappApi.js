@@ -1,4 +1,4 @@
-const WHATSAPP_API_BASE = 'https://graph.instagram.com/v21.0';
+const WHATSAPP_API_BASE = process.env.WHATSAPP_API_BASE || 'https://graph.facebook.com/v17.0';
 const WHATSAPP_SEND_MESSAGE_ENDPOINT = '/messages';
 
 /**
@@ -145,16 +145,16 @@ export async function sendWhatsAppMessage(options) {
       body: JSON.stringify(messageBody),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const error = new Error(
-        data.error?.message || `WhatsApp API error: ${response.status}`
-      );
-      error.code = data.error?.code || 'API_ERROR';
+      const errMsg = data?.error?.message || `WhatsApp API error: ${response.status}`;
+      const errCode = data?.error?.code || 'API_ERROR';
+      const error = new Error(errMsg);
+      error.code = errCode;
       error.statusCode = response.status;
-      error.apiDetails = data.error;
-      console.error('❌ WhatsApp API error:', error.message, data.error);
+      error.apiDetails = data?.error || data;
+      console.error('❌ WhatsApp API error:', errMsg, data?.error || data);
       throw error;
     }
 
