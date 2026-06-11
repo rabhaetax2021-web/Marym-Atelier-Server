@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:version": "vite build && node scripts/generate-version.js",
     "preview": "vite preview",
     "start": "node server.js",
     "dev:server": "nodemon server.js",
     "prod": "NODE_ENV=production node server.js",
+    "deploy:example": "npm run build:version && pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs",
     "lint": "eslint ."
   },
   "dependencies": {

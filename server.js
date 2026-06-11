@@ -80,6 +80,28 @@ app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/upload-image', uploadRouter);
 app.use('/api/notify-reservation', notifyRouter);
 
+// Version endpoint: returns build version information if available
+app.get('/api/version', (req, res) => {
+  const versionFile = path.join(staticDir, 'version.json');
+  if (fs.existsSync(versionFile)) {
+    try {
+      const data = fs.readFileSync(versionFile, 'utf8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.type('application/json').send(data);
+    } catch (e) {
+      /* fallthrough to default */
+    }
+  }
+
+  // Fallback: minimal runtime info
+  const fallback = {
+    version: process.env.BUILD_VERSION || process.env.npm_package_version || 'unknown',
+    timestamp: new Date().toISOString()
+  };
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.json(fallback);
+});
+
 // Ensure DB schema is present (creates tables/indexes if missing)
 // In production we do NOT apply schema automatically unless explicitly forced.
 // Controlled via APPLY_DB_SCHEMA env var. Set to 'true' to apply on non-production.
@@ -101,12 +123,53 @@ if (shouldApplySchema) {
 
 // Serve frontend static files if a production build exists
 const staticDir = path.resolve(__dirname, 'dist');
-if (process.env.NODE_ENV === 'production' && fs.existsSync(staticDir)) {
+  if (process.env.NODE_ENV === 'production' && fs.existsSync(staticDir)) {
   console.log('Serving frontend static files from:', staticDir);
-  app.use(express.default.static(staticDir));
-  // SPA fallback for non-API routes
+
+  // Serve static files with custom caching headers:
+  // - HTML entry pages: no-cache, no-store, must-revalidate
+  // - Static hashed assets (js/css/images): public, max-age=31536000, immutable
+  // - Special files (env.js, version.json): no-cache so clients always fetch latest version info
+  app.use(express.default.static(staticDir, {
+    setHeaders: (res, filePath) => {
+      try {
+        const ext = path.extname(filePath).toLowerCase();
+        const fileName = path.basename(filePath).toLowerCase();
+
+        // HTML files: force fresh fetch
+        if (ext === '.html') {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          return;
+        }
+
+        // Explicit no-cache for version and env metadata files
+        if (fileName === 'version.json' || fileName === 'env.js') {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          return;
+        }
+
+        // Long-term caching for typical static assets with content-hashed filenames
+        if (['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return;
+        }
+      } catch (e) {
+        /* ignore header errors */
+      }
+    }
+  }));
+
+  // SPA fallback for non-API routes — ensure index.html is served with no-cache headers
   app.get(/^\/(?!api).*/, (req, res) => {
-    res.sendFile(path.join(staticDir, 'index.html'));
+    const indexPath = path.join(staticDir, 'index.html');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(indexPath);
   });
 } else {
   console.log('No built frontend found at', staticDir);
