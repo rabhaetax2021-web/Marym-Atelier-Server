@@ -1607,7 +1607,6 @@ body::after {
 }
 .product-instagram svg { display: block; color: var(--primary-gold); }
 .product-instagram .product-instagram-label { color: var(--primary-gold); font-weight:700; }
-}
 
 .footer-note {
   display: flex;
