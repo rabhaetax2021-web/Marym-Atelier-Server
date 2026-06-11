@@ -434,7 +434,15 @@ body::after {
 .admin-main-header { margin-bottom: 16px; }
 .admin-section { margin-bottom: 18px; }
 .admin-table-panel { padding: 12px; }
-.admin-table-scroll { overflow: auto; max-height: 60vh; }
+.admin-table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 60vh;
+  max-width: 100%;
+  /* Prevent scroll chaining so swipes inside the table stay within the table */
+  overscroll-behavior: contain;
+}
 .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 .admin-table th, .admin-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); text-align: left; }
 .admin-table th { font-weight: 700; color: var(--text-muted); font-size: 0.9rem; }
