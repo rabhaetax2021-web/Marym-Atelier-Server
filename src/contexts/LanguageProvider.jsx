@@ -175,6 +175,9 @@ const TRANSLATIONS = {
     whatsapp: {
       title: 'حجز موعد القياس',
       trialCostText: 'تكلفة تجربة الفستان 100 ج.م لكل فستان',
+      workingHoursText: 'ساعات العمل من 2:00 مساءً إلى 10:00 مساءً',
+      noMenAllowed: 'غير مسموح بدخول الرجال',
+      noChildrenAllowed: 'غير مسموح بدخول الأطفال',
       success: 'تم إرسال طلبك بنجاح! وصل إشعار واتساب للأتيليه وسنتواصل معكِ لتأكيد الموعد.',
       errorSave: '❌ خطأ في حفظ الحجز. تأكدي من اتصالك بالإنترنت وحاولي مرة أخرى.',
       errorGeneric: 'تعذّر إرسال طلبك. حاول مرة أخرى.',
@@ -472,6 +475,9 @@ const TRANSLATIONS = {
     whatsapp: {
       title: 'Book Measurement Appointment',
       trialCostText: 'Dress trial cost: 100 EGP per dress',
+      workingHoursText: 'Working hours: from 2:00pm to 10:00pm',
+      noMenAllowed: 'No men allowed',
+      noChildrenAllowed: 'No children allowed',
       success: 'Your request was sent successfully! WhatsApp notification was delivered and we will contact you to confirm.',
       errorSave: 'Error saving reservation. Check your connection and try again.',
       errorGeneric: 'Failed to send your request. Please try again.',

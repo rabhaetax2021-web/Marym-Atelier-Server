@@ -441,9 +441,15 @@ body::after {
   max-height: 60vh;
   max-width: 100%;
   /* Prevent scroll chaining so swipes inside the table stay within the table */
+  /* Prevent scroll chaining so swipes inside the table stay within the table */
   overscroll-behavior: contain;
-  /* Allow horizontal pan gestures on touch devices */
-  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: contain;
+  /* Let the container handle touch gestures on both axes */
+  touch-action: pan-x pan-y;
+  /* ensure the container captures pointer events */
+  position: relative;
+  z-index: 0;
 }
 .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; /* keep layout horizontally scrollable */
   /* Render table in LTR layout so horizontal scroll behaves naturally in RTL pages */
@@ -1564,6 +1570,32 @@ body::after {
   color: white;
   text-decoration: none;
   font-weight: 700;
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--pearl-white);
+  padding: 4px;
+}
+.footer-social svg { display: block; }
+
+.product-instagram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--pearl-white);
+}
+.product-instagram svg { display: block; }
 }
 
 .footer-note {

@@ -202,7 +202,15 @@ export default function WhatsAppModal({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="wa-modal-form">
-            <div className="wa-modal-cost-note">{t('whatsapp.trialCostText')}</div>
+            <div className="wa-modal-cost-note">
+              {t('whatsapp.trialCostText')}
+              <br />
+              {t('whatsapp.workingHoursText')}
+              <br />
+              {t('whatsapp.noMenAllowed')}
+              <br />
+              {t('whatsapp.noChildrenAllowed')}
+            </div>
 
             <div className="wa-modal-grid">
               {/* Full Name */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingBag, Heart } from 'lucide-react';
+import { Search, ShoppingBag, Heart, Instagram } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useLang } from '../contexts/LanguageProvider';
 import { fetchFAQs, getSetting } from '../services/dbService';
@@ -341,6 +341,9 @@ export default function CatalogView({ dresses, onSelectDress }) {
             <a href="#" className="footer-link">{t('catalog.contact')}</a>
             <a href="#" className="footer-link">{t('catalog.about')}</a>
             <a href="#" className="footer-link">{t('catalog.faq')}</a>
+            <a href="https://www.instagram.com/marymatelier" target="_blank" rel="noopener noreferrer" className="footer-link footer-social" aria-label="Instagram">
+              <Instagram size={16} />
+            </a>
           </div>
         </div>
         <div className="footer-note">
