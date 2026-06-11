@@ -344,6 +344,7 @@ export default function CatalogView({ dresses, onSelectDress }) {
             <a href="#" className="footer-link">{t('catalog.faq')}</a>
             <a href="https://www.instagram.com/marymatelier" target="_blank" rel="noopener noreferrer" className="footer-link footer-social" aria-label="Instagram">
               <InstagramIcon size={16} />
+              <span className="footer-social-label">{t('social.instagram')}</span>
             </a>
           </div>
         </div>

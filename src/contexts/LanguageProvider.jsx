@@ -200,6 +200,9 @@ const TRANSLATIONS = {
       dateBlockedHint: 'يرجى اختيار تاريخ إيجار آخر أو التواصل مع الأتيليه.',
       dateBlockedOk: 'حسناً، سأختار تاريخاً آخر',
     },
+    social: {
+      instagram: 'انستغرام',
+    },
     form: {
       addDressTitle: 'إضافة فستان جديد',
       editDressTitle: 'تعديل بيانات الفستان',
@@ -499,6 +502,9 @@ const TRANSLATIONS = {
       dateBlockedMessagePrefix: 'The dress',
       dateBlockedHint: 'Please choose another date or contact the atelier.',
       dateBlockedOk: 'OK, I will choose another date',
+    },
+    social: {
+      instagram: 'Instagram',
     },
     sales: {
       loginTitle: 'Sales Login',

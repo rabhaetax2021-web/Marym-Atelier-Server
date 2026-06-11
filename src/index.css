@@ -1570,6 +1570,7 @@ body::after {
   color: white;
   text-decoration: none;
   font-weight: 700;
+}
 .footer-social {
   display: inline-flex;
   align-items: center;
@@ -1584,6 +1585,13 @@ body::after {
 }
 .footer-social svg { display: block; }
 
+.footer-social-label {
+  color: var(--pearl-white);
+  font-weight: 700;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
 .product-instagram {
   display: inline-flex;
   align-items: center;
@@ -1593,9 +1601,12 @@ body::after {
   border-radius: 10px;
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.04);
-  color: var(--pearl-white);
+  color: var(--primary-gold);
+  gap: 8px;
+  padding: 6px 10px;
 }
-.product-instagram svg { display: block; }
+.product-instagram svg { display: block; color: var(--primary-gold); }
+.product-instagram .product-instagram-label { color: var(--primary-gold); font-weight:700; }
 }
 
 .footer-note {

@@ -299,6 +299,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
             <div style={{ marginTop: 12 }}>
               <a href="https://www.instagram.com/marymatelier" target="_blank" rel="noopener noreferrer" className="product-instagram" aria-label="Instagram">
                 <InstagramIcon size={18} />
+                <span className="product-instagram-label">{t('social.instagram')}</span>
               </a>
             </div>
             <p className="product-note">
