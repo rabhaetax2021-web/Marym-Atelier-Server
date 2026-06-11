@@ -54,7 +54,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     const timestamp = Date.now();
     const safeName = (originalname || 'upload').replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    const remotePath = `uploads/${timestamp}-${safeName}`;
+    const remotePath = `/${timestamp}-${safeName}`;
 
     const putParams = {
       Bucket: MINIO_BUCKET,
