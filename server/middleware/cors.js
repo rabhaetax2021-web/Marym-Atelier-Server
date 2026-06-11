@@ -1,9 +1,40 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+function readEnvFileForKey(key) {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const projectRoot = path.resolve(__dirname, '..', '..');
+    const candidates = [
+      path.join(projectRoot, `.env.${process.env.NODE_ENV || 'production'}`),
+      path.join(projectRoot, '.env')
+    ];
+    for (const file of candidates) {
+      if (!fs.existsSync(file)) continue;
+      const content = fs.readFileSync(file, 'utf8');
+      const re = new RegExp('^' + key + '\\s*=\\s*(.*)$', 'm');
+      const m = content.match(re);
+      if (m && m[1]) return m[1].trim();
+    }
+  } catch (e) {
+    // ignore
+  }
+  return null;
+}
+
 export default function corsMiddleware(req, res, next) {
-  const raw = process.env.CORS_ORIGIN || '*';
+  // Prefer runtime env, but fall back to reading env files so changes take effect without restart
+  // Prefer explicit value in env files to allow runtime edits without restart
+  const rawFromFile = readEnvFileForKey('CORS_ORIGIN');
+  let raw = rawFromFile || process.env.CORS_ORIGIN || '*';
   const allowed = raw.split(',').map(s => s.trim()).filter(Boolean);
   const requestOrigin = req.headers && req.headers.origin;
 
-  const allowCredentials = process.env.CORS_ALLOW_CREDENTIALS !== 'false';
+  const allowCredentialsFromFile = readEnvFileForKey('CORS_ALLOW_CREDENTIALS');
+  const allowCredentialsRaw = (allowCredentialsFromFile !== null ? allowCredentialsFromFile : process.env.CORS_ALLOW_CREDENTIALS);
+  const allowCredentials = (allowCredentialsRaw !== undefined && allowCredentialsRaw !== null ? String(allowCredentialsRaw) : 'true') !== 'false';
 
   let originToUse = '*';
   if (allowed.includes('*')) {
