@@ -117,8 +117,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true, message: 'Server is running' });
 });
 
-// Root path (for probes or direct requests)
+// Root path (serve frontend index if built, otherwise health JSON)
 app.get('/', (req, res) => {
+  if (process.env.NODE_ENV === 'production' && fs.existsSync(staticDir)) {
+    return res.sendFile(path.join(staticDir, 'index.html'));
+  }
   res.status(200).json({ ok: true, message: 'Server is running' });
 });
 
