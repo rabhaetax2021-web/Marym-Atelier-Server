@@ -23,8 +23,9 @@ createRoot(document.getElementById('root')).render(
 // App update/version checking: compare runtime version to deployed version and reload when changed
 ;(function(){
   try {
-    const APP_VERSION = (window && window.__APP_VERSION__) || 'dev';
+    const APP_VERSION = (typeof window !== 'undefined' && window.__APP_VERSION__) ? window.__APP_VERSION__ : null;
     let currentClientVersion = APP_VERSION;
+    let clientHasVersion = !!APP_VERSION;
     let refreshInProgress = false;
 
     async function getServerVersion() {
@@ -42,28 +43,39 @@ createRoot(document.getElementById('root')).render(
       if (refreshInProgress) return;
       const serverVersion = await getServerVersion();
       if (!serverVersion) return;
-      if (serverVersion !== currentClientVersion) {
-        refreshInProgress = true;
-        // Try to let service worker activate if present, then reload
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          try {
-            // Tell service worker to skip waiting (if it needs to)
-            navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-          } catch (e) {
-            // ignore
-          }
-          // reload after a short delay to allow activation
-          setTimeout(() => window.location.reload(true), 1000);
-        } else {
-          window.location.reload(true);
-        }
+
+      // If client has no build-time version (dev), adopt server version on first fetch and don't reload
+      if (!clientHasVersion) {
+        clientHasVersion = true;
+        currentClientVersion = serverVersion;
+        return;
       }
+
+      if (serverVersion === currentClientVersion) return;
+
+      // Detected a new version; perform a single reload
+      refreshInProgress = true;
+      try {
+        // Prefer asking waiting SW to skipWaiting if present
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg && reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            // allow SW to activate then reload
+            setTimeout(() => window.location.reload(), 1000);
+            return;
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Fallback: immediate reload
+      window.location.reload();
     }
 
-    // When a new service worker takes control, reload to ensure fresh UI
+    // When a new service worker takes control, reload once to ensure fresh UI
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
+        if (!refreshInProgress) window.location.reload();
       });
     }
 
