@@ -1,4 +1,4 @@
 pull and rerun
 
-pm2 delete all && git fetch origin && git reset --hard origin/main && rm -rf node_modules build dist .next && npm install && npm run build && pm2 start npm --name "marym-server" -- start
+pm2 delete all && git fetch origin && git reset --hard origin/main && rm -rf node_modules build dist .next public/sw.js dist/sw.js && npm install && npm run build && pm2 start npm --name "marym-server" -- start
 

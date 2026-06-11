@@ -21,12 +21,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((resp) => {
-      return caches.open(CACHE_NAME).then((cache) => { cache.put(event.request, resp.clone()); return resp; });
-    }).catch(() => caches.match('/appicon.jpg')))
-  );
+  // Forward all requests to network to avoid serving stale cached responses
+  event.respondWith(fetch(event.request));
 });
 
 self.addEventListener('push', (event) => {
