@@ -33,6 +33,32 @@
   <body>
     <div id="root"></div>
     <!-- Service worker registration removed intentionally (PWA features disabled) -->
+    <script>
+      // Unregister any existing service workers and clear caches to avoid SW intercepts
+      (async function(){
+        if ('serviceWorker' in navigator) {
+          try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) {
+              try { await r.unregister(); } catch (e) { /* ignore individual failures */ }
+            }
+            // also attempt to unregister the active registration
+            try { const reg = await navigator.serviceWorker.getRegistration(); if (reg) await reg.unregister(); } catch (e){}
+            console.log('Service workers unregistered');
+          } catch (e) { console.error('Error while unregistering service workers', e); }
+        }
+
+        if (window.caches && caches.keys) {
+          try {
+            const keys = await caches.keys();
+            for (const k of keys) {
+              try { await caches.delete(k); } catch (e) { /* ignore */ }
+            }
+            console.log('Caches cleared');
+          } catch (e) { console.error('Error while clearing caches', e); }
+        }
+      })();
+    </script>
     <script src="/env.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
