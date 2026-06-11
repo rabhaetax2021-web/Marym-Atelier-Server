@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment-specific .env file
-const nodeEnv = process.env.NODE_ENV || 'development';
+const nodeEnv = process.env.NODE_ENV || 'production';
 const envFile = path.resolve(__dirname, `.env.${nodeEnv}`);
 console.log(`📝 Loading environment from: ${envFile}`);
 const result1 = dotenv.config({ path: envFile });
