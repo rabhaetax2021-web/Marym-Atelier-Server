@@ -32,41 +32,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // Register the appropriate service worker for the current route (dashboard or sales)
-      (function(){
-        if('serviceWorker' in navigator){
-          var p = location.pathname || '/';
-          if(p.indexOf('/dashboard') === 0){
-            navigator.serviceWorker.register('/dashboard/sw.js', { scope: '/dashboard/' }).then(()=>console.log('Dashboard SW registered')).catch(console.error);
-          } else if(p.indexOf('/sales') === 0){
-            navigator.serviceWorker.register('/sales/sw.js', { scope: '/sales/' }).then(()=>console.log('Sales SW registered')).catch(console.error);
-          } else {
-            // register root client SW
-            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(()=>console.log('Client SW registered')).catch(console.error);
-          }
-        }
-
-        // helper to subscribe to push from app code: call window.registerForPush(VAPID_PUBLIC_KEY)
-        window.registerForPush = async function(vapidPublicKeyBase64){
-          if(!('serviceWorker' in navigator)) throw new Error('No Service Worker support');
-          const reg = await navigator.serviceWorker.ready;
-          const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidPublicKeyBase64) });
-          return sub;
-        };
-
-        function urlBase64ToUint8Array(base64String) {
-          const padding = '='.repeat((4 - base64String.length % 4) % 4);
-          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-          const rawData = atob(base64);
-          const outputArray = new Uint8Array(rawData.length);
-          for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-          }
-          return outputArray;
-        }
-      })();
-    </script>
+    <!-- Service worker registration removed intentionally (PWA features disabled) -->
     <script src="/env.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
