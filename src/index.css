@@ -442,9 +442,16 @@ body::after {
   max-width: 100%;
   /* Prevent scroll chaining so swipes inside the table stay within the table */
   overscroll-behavior: contain;
+  /* Allow horizontal pan gestures on touch devices */
+  touch-action: pan-x;
 }
-.admin-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+.admin-table { width: 100%; border-collapse: collapse; min-width: 800px; /* keep layout horizontally scrollable */
+  /* Render table in LTR layout so horizontal scroll behaves naturally in RTL pages */
+  direction: ltr;
+}
 .admin-table th, .admin-table td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); text-align: left; }
+/* Keep cell contents RTL while table layout is LTR */
+.admin-table th > *, .admin-table td > * { direction: rtl; }
 .admin-table th { font-weight: 700; color: var(--text-muted); font-size: 0.9rem; }
 .admin-table-actions-col { width: 220px; text-align: right; }
 .admin-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
