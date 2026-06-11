@@ -163,8 +163,10 @@ const staticDir = path.resolve(__dirname, 'dist');
     }
   }));
 
-  // SPA fallback for non-API routes — ensure index.html is served with no-cache headers
-  app.get(/^\/(?!api).*/, (req, res) => {
+  // SPA fallback for navigation requests only — ensure index.html is served with no-cache headers
+  app.get(/^\/(?!api).*/, (req, res, next) => {
+    // Only treat requests that accept HTML as navigation (prevents serving index.html for /env.js, assets, etc.)
+    if (!req.headers || !req.headers.accept || !req.headers.accept.includes('text/html')) return next();
     const indexPath = path.join(staticDir, 'index.html');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
