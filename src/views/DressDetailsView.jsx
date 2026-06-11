@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Home, Truck, ShieldCheck, Tag, Instagram } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Home, Truck, ShieldCheck, Tag } from 'lucide-react';
+import InstagramIcon from '../components/InstagramIcon';
 import { useLang } from '../contexts/LanguageProvider';
 
 // category labels are provided via translations
@@ -297,7 +298,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
 
             <div style={{ marginTop: 12 }}>
               <a href="https://www.instagram.com/marymatelier" target="_blank" rel="noopener noreferrer" className="product-instagram" aria-label="Instagram">
-                <Instagram size={18} />
+                <InstagramIcon size={18} />
               </a>
             </div>
             <p className="product-note">
