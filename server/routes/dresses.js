@@ -69,7 +69,8 @@ async function handleDressCreation(payload, req, res) {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
           // store as JSON text so pg driver and Postgres jsonb accept it reliably
           snake.images = JSON.stringify(imagesArray);
-      } catch (e) {
+      } catch (err) {
+        void err;
         return jsonError(res, 400, 'Invalid images payload.');
       }
     }
@@ -171,7 +172,8 @@ router.get('/', async (req, res) => {
       if (typeof r.images === 'string') {
         try {
           r.images = JSON.parse(r.images);
-        } catch (e) {
+        } catch (err) {
+          void err;
           r.images = [];
         }
       }
@@ -207,7 +209,8 @@ router.patch('/', async (req, res) => {
         imagesArray = snake.images.map((img) => (typeof img === 'string' ? img : String(img)));
         // store as JSON text so pg driver and Postgres jsonb accept it reliably
         snake.images = JSON.stringify(imagesArray);
-      } catch (e) {
+      } catch (err) {
+        void err;
         return jsonError(res, 400, 'Invalid images payload.');
       }
       // Sync dress_photos: remove existing and insert new
@@ -234,7 +237,7 @@ router.patch('/', async (req, res) => {
       return jsonError(res, 400, 'No fields to update.');
     }
 
-    const updates = Object.entries(snake).map(([key, val], i) => `${key} = $${i + 1}`).join(', ');
+    const updates = Object.entries(snake).map(([key], i) => `${key} = $${i + 1}`).join(', ');
     const values = Object.values(snake);
     values.push(id);
 

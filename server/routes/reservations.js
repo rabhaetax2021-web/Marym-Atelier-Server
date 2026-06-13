@@ -108,12 +108,7 @@ router.patch('/', async (req, res) => {
       return jsonError(res, 400, 'No fields to update.');
     }
 
-    // Fetch previous status for status transition detection
-    const statusQuery = 'SELECT status FROM reservations WHERE id = $1';
-    const statusResult = await pool.query(statusQuery, [id]);
-    const prevStatus = statusResult.rows[0]?.status;
-
-    const updates = Object.entries(snake).map(([key, val], i) => `${key} = $${i + 1}`).join(', ');
+    const updates = Object.entries(snake).map(([key], i) => `${key} = $${i + 1}`).join(', ');
     const values = Object.values(snake);
     values.push(id);
 

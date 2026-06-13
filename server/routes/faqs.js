@@ -51,7 +51,7 @@ router.patch('/', async (req, res) => {
       return jsonError(res, 400, 'No fields to update.');
     }
 
-    const updates = Object.entries(payload).map(([key, val], i) => `${key} = $${i + 1}`).join(', ');
+    const updates = Object.entries(payload).map(([key], i) => `${key} = $${i + 1}`).join(', ');
     const values = Object.values(payload);
     values.push(id);
 

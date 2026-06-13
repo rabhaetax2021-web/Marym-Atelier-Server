@@ -34,7 +34,7 @@ createRoot(document.getElementById('root')).render(
         if (!res.ok) return null;
         const data = await res.json();
         return data && data.version ? data.version : null;
-      } catch (e) {
+      } catch {
         return null;
       }
     }
@@ -66,7 +66,7 @@ createRoot(document.getElementById('root')).render(
             return;
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
 
       // Fallback: immediate reload
       window.location.reload();
@@ -92,5 +92,5 @@ createRoot(document.getElementById('root')).render(
       if (document.visibilityState === 'visible') checkForUpdate();
     });
 
-  } catch (e) { /* ignore */ }
+  } catch { /* ignore */ }
 })();

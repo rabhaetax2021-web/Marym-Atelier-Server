@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import pool from '../config/db.js';
 import { jsonError } from '../utils/errors.js';
 import {
   sendWhatsAppMessage,
@@ -209,7 +208,7 @@ router.post('/debug', async (req, res) => {
     });
     const body = await resp.text();
     const parsed = (() => {
-      try { return JSON.parse(body); } catch (e) { return body; }
+      try { return JSON.parse(body); } catch { return body; }
     })();
     return res.status(200).json({ ok: resp.ok, status: resp.status, data: parsed });
   } catch (err) {

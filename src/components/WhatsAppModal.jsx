@@ -107,8 +107,8 @@ export default function WhatsAppModal({
       onClose();
       window.history.pushState({}, '', '/');
       window.dispatchEvent(new PopStateEvent('popstate'));
-    } catch (e) {
-      /* ignore */
+    } catch (err) {
+      void err;
     }
   };
 

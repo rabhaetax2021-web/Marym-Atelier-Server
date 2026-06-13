@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Footer with WhatsApp contact button. Set VITE_WHATSAPP_SUPPORT_NUMBER in .env for your number
 export default function Footer() {
   const supportNumber = import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || '201012345678';

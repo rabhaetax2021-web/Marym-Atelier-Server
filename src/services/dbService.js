@@ -9,7 +9,8 @@ try {
   } else {
     API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
   }
-} catch (e) {
+} catch (err) {
+  void err;
   API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
 }
 

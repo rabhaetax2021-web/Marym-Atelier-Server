@@ -15,7 +15,7 @@ import { Client } from 'pg';
             if (key === 'marymatelier_POSTGRES_URL' && !conn) conn = val;
           }
         }
-      }catch(e){ /* ignore */ }
+      }catch(err){ void err; }
     }
     if(!conn){ console.error('No POSTGRES_URL'); process.exit(1); }
     const pg = new Client({ connectionString: conn, ssl: { rejectUnauthorized: false } });

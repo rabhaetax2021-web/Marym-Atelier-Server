@@ -18,4 +18,20 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  // Node runtime files (server, scripts, CLI helpers)
+  {
+    files: ['server/**', 'scripts/**', 'server.js', 'test-*.js'],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: { ecmaVersion: 'latest' },
+    },
+  },
+  // Service worker files under public/ use serviceworker globals
+  {
+    files: ['public/**/sw.js', 'public/sw.js'],
+    languageOptions: {
+      globals: globals.serviceworker,
+      parserOptions: { ecmaVersion: 'latest' },
+    },
+  },
 ])

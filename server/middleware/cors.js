@@ -18,7 +18,7 @@ function readEnvFileForKey(key) {
       const m = content.match(re);
       if (m && m[1]) return m[1].trim();
     }
-  } catch (e) {
+  } catch {
     // ignore
   }
   return null;
@@ -36,7 +36,7 @@ export default function corsMiddleware(req, res, next) {
   const allowCredentialsRaw = (allowCredentialsFromFile !== null ? allowCredentialsFromFile : process.env.CORS_ALLOW_CREDENTIALS);
   const allowCredentials = (allowCredentialsRaw !== undefined && allowCredentialsRaw !== null ? String(allowCredentialsRaw) : 'true') !== 'false';
 
-  let originToUse = '*';
+  let originToUse;
   if (allowed.includes('*')) {
     // If credentials are allowed, echo the request origin (can't use '*')
     if (allowCredentials && requestOrigin) originToUse = requestOrigin;
@@ -47,6 +47,7 @@ export default function corsMiddleware(req, res, next) {
     originToUse = allowed[0] || '*';
   }
 
+  if (!originToUse) originToUse = '*';
   res.setHeader('Access-Control-Allow-Origin', originToUse);
   // Ensure caches vary by Origin when dynamic
   res.setHeader('Vary', 'Origin');

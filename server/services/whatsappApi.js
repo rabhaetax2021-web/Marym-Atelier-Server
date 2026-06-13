@@ -171,7 +171,7 @@ export function buildWhatsAppTemplatePayload({ action, reservation, dress, recip
       const dressPath = `/dress/${encodeURIComponent(reservation.dressId || dress?.id || '')}`;
       dressUrl = `${maybeOrigin}${dressPath}`;
     }
-  } catch (e) {
+  } catch {
     dressUrl = '';
   }
 
@@ -222,7 +222,7 @@ export function formatWhatsAppMessage({ action, reservation, dress }) {
   const dressPriceStr = dress?.price ? `${dress.price} ج.م` : '';
   const dressSizeStr = dress?.size ? ` (${dress.size})` : '';
 
-  let messageText = '';
+  let messageText;
 
   if (action === 'new') {
     messageText = `🎉 *حجز جديد من Marym Atelier*
@@ -255,7 +255,7 @@ export function formatWhatsAppMessage({ action, reservation, dress }) {
     to: formatPhoneNumber(rawClientPhone),
     type: 'text',
     text: {
-      body: messageText,
+      body: messageText || '',
     },
   };
 }
@@ -418,7 +418,7 @@ export async function notifyAdminOrSales(options) {
   const { recipientType = 'admin' } = options;
   const validation = validateWhatsAppEnv();
 
-  let targetNumbers = [];
+  let targetNumbers;
   if (recipientType === 'sales') {
     targetNumbers = (validation.credentials.salesNumber || '')
       .split(',')
@@ -431,7 +431,7 @@ export async function notifyAdminOrSales(options) {
       .filter(n => n);
   }
 
-  if (targetNumbers.length === 0) {
+  if (!Array.isArray(targetNumbers) || targetNumbers.length === 0) {
     console.warn(`⚠️  No ${recipientType} WhatsApp number configured`);
     return { success: false, skipped: true, reason: `No ${recipientType} number`, count: 0 };
   }

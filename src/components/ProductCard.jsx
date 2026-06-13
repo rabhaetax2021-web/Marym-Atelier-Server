@@ -98,7 +98,7 @@ export default function ProductCard({ dress, onSelect, getCategoryLabel }) {
         )}
         <p className="product-copy text-[var(--text-muted)] text-sm line-clamp-2 mt-2">{dress.details}</p>
         <div className="product-meta mt-4 flex items-center justify-between">
-          <span className="product-price text-[var(--primary-gold)] font-extrabold">{dress.price != null ? `${dress.price} ج.م` : '—'}</span>
+          <span className="product-price text-[var(--primary-gold)] font-extrabold">{(typeof dress.price === 'number' && dress.price > 0) ? `${dress.price} ج.م` : '—'}</span>
           <span className={`product-status text-xs font-bold ${dress.available ? 'available text-emerald-400' : 'sold text-rose-400'}`}>
             {dress.available ? t('product.available') : t('product.unavailable')}
           </span>

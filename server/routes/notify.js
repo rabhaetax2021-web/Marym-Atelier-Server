@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sendWhatsAppMessage, notifyAdminOrSales, validateWhatsAppEnv } from '../services/whatsappApi.js';
+import { sendWhatsAppMessage, validateWhatsAppEnv } from '../services/whatsappApi.js';
 import { jsonError } from '../utils/errors.js';
 
 const router = Router();

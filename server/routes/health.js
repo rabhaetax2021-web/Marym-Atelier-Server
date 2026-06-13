@@ -12,7 +12,8 @@ router.get('/', async (req, res) => {
       const client = await pool.connect();
       client.release();
       dbOk = true;
-    } catch (e) {
+    } catch (err) {
+      void err;
       dbOk = false;
     }
 

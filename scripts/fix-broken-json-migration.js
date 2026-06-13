@@ -25,7 +25,7 @@ async function loadEnvFallback(){
         if(!process.env[key]) process.env[key]=val;
       }
     }
-  }catch(e){ /* ignore */ }
+  }catch(err){ void err; }
 }
 
 async function main(){

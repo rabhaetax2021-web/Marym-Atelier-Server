@@ -5,7 +5,8 @@ const path = require('path');
 function getGitSha() {
   try {
     return execSync('git rev-parse --short HEAD').toString().trim();
-  } catch (e) {
+  } catch (err) {
+    void err;
     return null;
   }
 }

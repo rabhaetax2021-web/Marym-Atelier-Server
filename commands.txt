@@ -1,6 +1,11 @@
 connect to server
 
-ssh -i C:\Users\code\Desktop\kepp.pem root@45.128.223.242 
+ssh -i C:\Users\code\Desktop\keyp.pem root@45.128.223.242 
+
+
+Folder path
+
+cd /root/Marym-Atelier-Server
 
 
 pull and rerun

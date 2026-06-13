@@ -88,7 +88,8 @@ app.get('/api/version', (req, res) => {
       const data = fs.readFileSync(versionFile, 'utf8');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.type('application/json').send(data);
-    } catch (e) {
+    } catch (err) {
+      void err;
       /* fallthrough to default */
     }
   }
@@ -157,7 +158,8 @@ const staticDir = path.resolve(__dirname, 'dist');
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
           return;
         }
-      } catch (e) {
+      } catch (err) {
+        void err;
         /* ignore header errors */
       }
     }

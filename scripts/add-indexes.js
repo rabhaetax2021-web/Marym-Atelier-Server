@@ -27,7 +27,7 @@ const client = new Client({ connectionString: sanitized, ssl: { rejectUnauthoriz
     await client.end();
   } catch (err) {
     console.error('ERR', err && err.message ? err.message : err);
-    try { await client.end(); } catch (_) {}
+    try { await client.end(); } catch (err2) { void err2; }
     process.exit(1);
   }
 })();

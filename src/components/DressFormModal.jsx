@@ -284,7 +284,6 @@ export default function DressFormModal({ isOpen, onClose, mode = 'add', dress, d
               <label>{t('form.priceLabel')}</label>
               <input
                 type="number"
-                min="100"
                 placeholder={t('form.placeholders.price')}
                 value={formDress.price ?? ''}
                 onChange={(e) => setFormDress({ ...formDress, price: e.target.value === '' ? null : Number(e.target.value) })}

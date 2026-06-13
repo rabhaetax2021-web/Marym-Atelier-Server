@@ -180,8 +180,8 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
       // refresh app data and wait for it to propagate
       if (typeof onRefreshDresses === 'function') await onRefreshDresses();
       // notify other tabs/windows to refresh too
-      try { localStorage.setItem('mary_dresses_updated_at', String(Date.now())); } catch (e) {}
-      try { window.dispatchEvent(new CustomEvent('mary_dresses_updated')); } catch (e) {}
+      try { localStorage.setItem('mary_dresses_updated_at', String(Date.now())); } catch (err2) { void err2; }
+      try { window.dispatchEvent(new CustomEvent('mary_dresses_updated')); } catch (err2) { void err2; }
     } catch (err) { console.error('Failed to save positions', err); }
   };
 
@@ -205,7 +205,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
   };
 
   const saveFaqsToStorage = (items) => {
-    try { localStorage.setItem('mary_faqs', JSON.stringify(items)); } catch (e) { console.error(e); }
+    try { localStorage.setItem('mary_faqs', JSON.stringify(items)); } catch (err) { console.error(err); }
     setFaqs(items);
   };
 
@@ -445,7 +445,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
                       <td>{dress.name}</td>
                       <td className="admin-table-mono">{dress.id}</td>
                       <td>{t(`catalog.categories.${dress.category}`) || dress.category}</td>
-                      <td className="admin-table-price">{dress.price != null ? `${dress.price} ج.م` : '—'}</td>
+                      <td className="admin-table-price">{(typeof dress.price === 'number' && dress.price > 0) ? `${dress.price} ج.م` : '—'}</td>
                       <td className="admin-table-mono">{dress.size}</td>
                       <td style={{ textAlign: 'center', color: dress.featured ? '#4ade80' : '#a3b2ac', fontWeight: 800, fontSize: '0.85rem' }}>
                         {dress.featured ? `★ ${t('admin.dressTableFeatured')}` : '—'}

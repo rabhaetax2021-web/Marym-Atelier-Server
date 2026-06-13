@@ -17,7 +17,7 @@ function useProductMeta(dress) {
     };
     const image = resolveUrl(dress.images?.[0]);
     const title = `${dress.name} | MaryMatelier`;
-    const description = dress.details || (dress.price != null ? `${dress.name} — إيجار يومي ${dress.price} ج.م` : `${dress.name}`);
+    const description = dress.details || ((typeof dress.price === 'number' && dress.price > 0) ? `${dress.name} — إيجار يومي ${dress.price} ج.م` : `${dress.name}`);
 
     document.title = title;
 
@@ -36,7 +36,7 @@ function useProductMeta(dress) {
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', 'product');
     if (image) setMeta('property', 'og:image', image);
-    if (dress.price != null) {
+    if (typeof dress.price === 'number' && dress.price > 0) {
       setMeta('property', 'product:price:amount', String(dress.price));
       setMeta('property', 'product:price:currency', 'EGP');
     }
@@ -58,7 +58,7 @@ function useProductMeta(dress) {
       image: (dress.images || []).map((img) => resolveUrl(img)),
       offers: {
         '@type': 'Offer',
-        ...(dress.price != null ? { price: dress.price, priceCurrency: 'EGP' } : {}),
+        ...(typeof dress.price === 'number' && dress.price > 0 ? { price: dress.price, priceCurrency: 'EGP' } : {}),
         availability: dress.available
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
@@ -251,15 +251,15 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
             <div className="product-price-block">
               <span className="product-price-label">سعر الإيجار اليومي</span>
               <div className="product-price-row">
-                {dress.price != null ? (
-                  <>
-                    <span className="product-price">{String(dress.price).toLocaleString ? Number(dress.price).toLocaleString('ar-EG') : String(dress.price)}</span>
-                    <span className="product-currency">ج.م</span>
-                    <span className="product-price-unit">/ يوم</span>
-                  </>
-                ) : (
-                  <span className="product-price">—</span>
-                )}
+                {(typeof dress.price === 'number' && dress.price > 0) ? (
+                    <>
+                      <span className="product-price">{String(dress.price).toLocaleString ? Number(dress.price).toLocaleString('ar-EG') : String(dress.price)}</span>
+                      <span className="product-currency">ج.م</span>
+                      <span className="product-price-unit">/ يوم</span>
+                    </>
+                  ) : (
+                    <span className="product-price">—</span>
+                  )}
               </div>
             </div>
 
