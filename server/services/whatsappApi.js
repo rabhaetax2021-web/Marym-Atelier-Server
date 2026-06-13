@@ -31,6 +31,17 @@ export function formatPhoneNumber(phone) {
 }
 
 /**
+ * Format phone for display in messages (readable form).
+ * e.g. converts '20101xxxxxxxx' -> '+20101xxxxxxxx'
+ */
+export function formatDisplayPhone(phone) {
+  const digits = formatPhoneNumber(phone || '');
+  if (!digits) return '—';
+  if (digits.length === 12 && digits.startsWith('20')) return `+${digits}`;
+  return digits;
+}
+
+/**
  * Validates Egyptian phone number format
  * @param {string} phone - Phone number to validate
  * @returns {boolean}
@@ -66,7 +77,7 @@ export function buildWhatsAppMessage({ reservation, dress, action, forClient = f
   const dressId = reservation.dressId || dress?.id || '—';
   const placeholder2 = `${dressName} — كود ${dressId}${dress?.price ? ` — ${dress.price} ج.م` : ''}`;
   const clientName = reservation.clientName || '—';
-  const clientPhone = reservation.clientPhone || '—';
+  const clientPhone = formatDisplayPhone(reservation.clientPhone || '');
   const clientWeight = reservation.weight !== undefined && reservation.weight !== null ? String(reservation.weight) : '—';
   const clientHeight = reservation.height !== undefined && reservation.height !== null ? String(reservation.height) : '—';
   const weightHeightSuffix = (clientWeight !== '—' || clientHeight !== '—') ? ` — وزن: ${clientWeight} كجم / طول: ${clientHeight} سم` : '';
@@ -111,7 +122,7 @@ export function buildWhatsAppMessage({ reservation, dress, action, forClient = f
  * Requires template names to be set in environment variables or passed via options.
  * Falls back to null if no template name is configured for the given role/action.
  */
-export function buildWhatsAppTemplatePayload({ action, reservation, dress, recipientType = 'client', forClient = false, origin = '', templateName: optTemplateName } = {}) {
+export function buildWhatsAppTemplatePayload({ action, reservation, dress, recipientType = 'client', forClient = false, origin = '', templateName: optTemplateName, recipientPhone = null } = {}) {
   const lang = process.env.WHATSAPP_TEMPLATE_LANG || 'ar';
 
   // If a common template name is provided (optionally via env), prefer it for all recipients
@@ -137,7 +148,7 @@ export function buildWhatsAppTemplatePayload({ action, reservation, dress, recip
   const placeholder1 = action === 'confirm' ? '✅ حجز مؤكد' : '🔔 حجز جديد';
   const placeholder2 = `${dressName} — كود ${dressId}${dressPrice ? ` — ${dressPrice}` : ''}`;
   const clientName = reservation.clientName || '—';
-  const clientPhone = reservation.clientPhone || '—';
+  const clientPhone = formatDisplayPhone(reservation.clientPhone || '');
   const clientWeight = reservation.weight !== undefined && reservation.weight !== null ? String(reservation.weight) : '—';
   const clientHeight = reservation.height !== undefined && reservation.height !== null ? String(reservation.height) : '—';
   const weightHeightSuffix = (clientWeight !== '—' || clientHeight !== '—') ? ` — وزن: ${clientWeight} كجم / طول: ${clientHeight} سم` : '';
@@ -180,7 +191,7 @@ export function buildWhatsAppTemplatePayload({ action, reservation, dress, recip
 
   return {
     messaging_product: 'whatsapp',
-    to: formatPhoneNumber(reservation.clientPhone),
+    to: formatPhoneNumber(recipientPhone || reservation.clientPhone),
     type: 'template',
     template: {
       name: templateName,
@@ -198,13 +209,15 @@ export function buildWhatsAppTemplatePayload({ action, reservation, dress, recip
 export function formatWhatsAppMessage({ action, reservation, dress }) {
   const {
     clientName = 'العميل',
-    clientPhone = '',
+    clientPhone: rawClientPhone = '',
     dressName = 'الفستان',
     trialDate = '',
     rentDate = '',
     time = '',
     notes = '',
   } = reservation || {};
+
+  const clientPhone = formatDisplayPhone(rawClientPhone || '');
 
   const dressPriceStr = dress?.price ? `${dress.price} ج.م` : '';
   const dressSizeStr = dress?.size ? ` (${dress.size})` : '';
@@ -239,7 +252,7 @@ export function formatWhatsAppMessage({ action, reservation, dress }) {
 
   return {
     messaging_product: 'whatsapp',
-    to: formatPhoneNumber(clientPhone),
+    to: formatPhoneNumber(rawClientPhone),
     type: 'text',
     text: {
       body: messageText,
@@ -272,39 +285,46 @@ export async function sendWhatsAppMessage(options) {
     throw error;
   }
 
-  // Normalize and validate phone number; WhatsApp expects country code (no +)
-  const rawPhone = String(reservation.clientPhone || '');
-  const digitsOnly = rawPhone.replace(/\D/g, '');
-  let normalized = digitsOnly;
-  if (normalized.startsWith('00')) normalized = normalized.slice(2);
-  if (normalized.startsWith('0') && normalized.length === 11) normalized = normalized.slice(1);
-  if (normalized.length === 10) normalized = '20' + normalized;
+  // Normalize and validate client phone (for content purposes)
+  const rawClientPhone = String(reservation.clientPhone || '');
+  const digitsOnlyClient = rawClientPhone.replace(/\D/g, '');
+  let normalizedClient = digitsOnlyClient;
+  if (normalizedClient.startsWith('00')) normalizedClient = normalizedClient.slice(2);
+  if (normalizedClient.startsWith('0') && normalizedClient.length === 11) normalizedClient = normalizedClient.slice(1);
+  if (normalizedClient.length === 10) normalizedClient = '20' + normalizedClient;
 
-  if (!/^(20)(10|11|12|15)\d{8}$/.test(normalized)) {
+  if (!/^(20)(10|11|12|15)\d{8}$/.test(normalizedClient)) {
     const error = new Error(`Invalid Egyptian phone number: ${reservation.clientPhone}`);
     error.code = 'INVALID_PHONE_FORMAT';
     error.statusCode = 400;
     throw error;
   }
 
-  // Replace clientPhone in options with normalized value so downstream uses correct format
-  options = {
-    ...options,
-    reservation: {
-      ...options.reservation,
-      clientPhone: normalized,
-    },
-  };
+  // Determine the actual recipient phone (where the message will be sent).
+  // For admin/sales notifications this will be the admin/sales number; for client notifications it's the client.
+  const recipientRaw = options.recipientPhone || reservation.clientPhone;
+  const digitsOnlyRecipient = String(recipientRaw || '').replace(/\D/g, '');
+  let normalizedRecipient = digitsOnlyRecipient;
+  if (normalizedRecipient.startsWith('00')) normalizedRecipient = normalizedRecipient.slice(2);
+  if (normalizedRecipient.startsWith('0') && normalizedRecipient.length === 11) normalizedRecipient = normalizedRecipient.slice(1);
+  if (normalizedRecipient.length === 10) normalizedRecipient = '20' + normalizedRecipient;
+
+  if (!/^(20)(10|11|12|15)\d{8}$/.test(normalizedRecipient)) {
+    const error = new Error(`Invalid recipient phone number: ${recipientRaw}`);
+    error.code = 'INVALID_RECIPIENT_PHONE_FORMAT';
+    error.statusCode = 400;
+    throw error;
+  }
 
   const { recipientType } = options || {};
   // Decide whether to use templates. Options override env; default to true per request.
   const useTemplates = (typeof options.useTemplate !== 'undefined')
     ? Boolean(options.useTemplate)
     : (process.env.WHATSAPP_USE_TEMPLATE ? process.env.WHATSAPP_USE_TEMPLATE === 'true' : true);
-
   let messageBody;
+  const isAdminRecipient = recipientType === 'admin' || recipientType === 'sales';
   if (useTemplates) {
-    const isAdminRecipient = recipientType === 'admin' || recipientType === 'sales';
+    // When templates are required, fail fast if no template is configured for this recipient/action
     const templatePayload = buildWhatsAppTemplatePayload({
       action: options.action,
       reservation: options.reservation,
@@ -312,20 +332,24 @@ export async function sendWhatsAppMessage(options) {
       recipientType: isAdminRecipient ? recipientType : 'client',
       forClient: !isAdminRecipient,
       origin: options.origin,
+      recipientPhone: normalizedRecipient,
     });
 
-    if (templatePayload) {
-      messageBody = templatePayload;
+    if (!templatePayload) {
+      const error = new Error(`Missing WhatsApp template for ${isAdminRecipient ? recipientType : 'client'} (action=${options.action})`);
+      error.code = 'MISSING_TEMPLATE';
+      error.statusCode = 500;
+      throw error;
     }
-  }
 
-  // Fallback to text payload if template not used or not configured
-  if (!messageBody) {
-    if (recipientType === 'admin' || recipientType === 'sales') {
+    messageBody = templatePayload;
+  } else {
+    // Templates disabled -> fallback to text-only messages
+    if (isAdminRecipient) {
       const adminText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action }, options.origin);
       messageBody = {
         messaging_product: 'whatsapp',
-        to: formatPhoneNumber(options.reservation.clientPhone),
+        to: formatPhoneNumber(normalizedRecipient),
         type: 'text',
         text: { body: adminText },
       };
@@ -333,7 +357,7 @@ export async function sendWhatsAppMessage(options) {
       const clientText = buildWhatsAppMessage({ reservation: options.reservation, dress: options.dress, action: options.action, forClient: true }, options.origin);
       messageBody = {
         messaging_product: 'whatsapp',
-        to: formatPhoneNumber(options.reservation.clientPhone),
+        to: formatPhoneNumber(normalizedRecipient),
         type: 'text',
         text: { body: clientText },
       };
@@ -418,10 +442,8 @@ export async function notifyAdminOrSales(options) {
     try {
       const modifiedOptions = {
         ...options,
-        reservation: {
-          ...options.reservation,
-          clientPhone: targetNumber,
-        },
+        // do NOT overwrite clientPhone; pass recipientPhone so message goes to admin number
+        recipientPhone: targetNumber,
         recipientType,
       };
       const result = await sendWhatsAppMessage(modifiedOptions);

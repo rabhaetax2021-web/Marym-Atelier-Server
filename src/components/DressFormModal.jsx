@@ -12,7 +12,7 @@ const EMPTY_DRESS = {
   designer: '',
   // default to first Arabic category
   category: 'mermaid_extension',
-  price: 1500,
+  price: null,
   size: 'M',
   color: 'أبيض',
   bigSize: false,
@@ -160,7 +160,7 @@ export default function DressFormModal({ isOpen, onClose, mode = 'add', dress, d
       ? formDress.images.map((img) => (img.trim ? img.trim() : img)).filter(Boolean)
       : [];
 
-    if (!formDress.name || !formDress.id || !formDress.designer || !formDress.price || !formDress.color || normalizedImages.length === 0) {
+    if (!formDress.name || !formDress.id || !formDress.designer || !formDress.color || normalizedImages.length === 0) {
       setFormError(t('form.errorFill'));
       return;
     }
@@ -284,13 +284,13 @@ export default function DressFormModal({ isOpen, onClose, mode = 'add', dress, d
               <label>{t('form.priceLabel')}</label>
               <input
                 type="number"
-                required
                 min="100"
                 placeholder={t('form.placeholders.price')}
-                value={formDress.price}
-                onChange={(e) => setFormDress({ ...formDress, price: Number(e.target.value) })}
+                value={formDress.price ?? ''}
+                onChange={(e) => setFormDress({ ...formDress, price: e.target.value === '' ? null : Number(e.target.value) })}
                 className="glass-input text-sm"
               />
+              <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: 6 }}>{t('form.priceOptional') || 'Price is optional'}</small>
             </div>
 
             <div className="dress-form-field">

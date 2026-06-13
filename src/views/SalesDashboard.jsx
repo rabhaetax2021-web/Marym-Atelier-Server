@@ -23,6 +23,49 @@ export default function SalesDashboard({ dresses, onCloseSales }) {
     load();
   }, []);
 
+  // Column resizer for sales table (same approach as admin)
+  useEffect(() => {
+    const tables = Array.from(document.querySelectorAll('.admin-table'));
+    let current = null;
+
+    function onMouseMove(e) {
+      if (!current) return;
+      const { startX, startWidth, th, index } = current;
+      const dx = e.clientX - startX;
+      const newWidth = Math.max(60, startWidth + dx);
+      th.style.width = `${newWidth}px`;
+      for (const table of tables) {
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        rows.forEach((row) => {
+          const cell = row.children[index];
+          if (cell) cell.style.width = `${newWidth}px`;
+        });
+      }
+    }
+
+    function onMouseUp() { current = null; document.body.style.cursor = ''; }
+
+    tables.forEach((table) => {
+      const ths = Array.from(table.querySelectorAll('th'));
+      ths.forEach((th, i) => {
+        const handle = th.querySelector('.col-resizer');
+        if (!handle) return;
+        handle.onmousedown = (ev) => {
+          ev.preventDefault();
+          current = { startX: ev.clientX, startWidth: th.getBoundingClientRect().width, th, index: i };
+          document.body.style.cursor = 'col-resize';
+        };
+      });
+    });
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (passcode === SALES_PASSCODE) {
@@ -106,14 +149,14 @@ export default function SalesDashboard({ dresses, onCloseSales }) {
 
         <div className="admin-section glass-panel admin-table-panel">
           <div className="admin-table-scroll">
-            <table className="admin-table">
+              <table className="admin-table">
               <thead>
                 <tr>
-                  <th>{t('admin.client')}</th>
-                  <th>{t('admin.dress')}</th>
-                  <th>{t('admin.rentDate')}</th>
-                  <th>{t('admin.trialDate')}</th>
-                  <th>{t('admin.status')}</th>
+                  <th className="resizable">{t('admin.client')}<div className="col-resizer" /></th>
+                  <th className="resizable">{t('admin.dress')}<div className="col-resizer" /></th>
+                  <th className="resizable">{t('admin.rentDate')}<div className="col-resizer" /></th>
+                  <th className="resizable">{t('admin.trialDate')}<div className="col-resizer" /></th>
+                  <th className="resizable">{t('admin.status')}<div className="col-resizer" /></th>
                   <th className="admin-table-actions-col">{t('admin.actions')}</th>
                 </tr>
                 <tr className="admin-table-filters">

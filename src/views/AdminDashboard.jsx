@@ -69,6 +69,50 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
     // no default sort loading here anymore
   }, []);
 
+  // Column resizer logic: make THs with .resizable adjustable by dragging the small handle (.col-resizer)
+  useEffect(() => {
+    const tables = Array.from(document.querySelectorAll('.admin-table'));
+    let current = null;
+
+    function onMouseMove(e) {
+      if (!current) return;
+      const { startX, startWidth, th, index } = current;
+      const dx = e.clientX - startX;
+      const newWidth = Math.max(60, startWidth + dx);
+      th.style.width = `${newWidth}px`;
+      // apply width to each td in this column
+      for (const table of tables) {
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        rows.forEach((row) => {
+          const cell = row.children[index];
+          if (cell) cell.style.width = `${newWidth}px`;
+        });
+      }
+    }
+
+    function onMouseUp() { current = null; document.body.style.cursor = ''; }
+
+    tables.forEach((table) => {
+      const ths = Array.from(table.querySelectorAll('th'));
+      ths.forEach((th, i) => {
+        const handle = th.querySelector('.col-resizer');
+        if (!handle) return;
+        handle.onmousedown = (ev) => {
+          ev.preventDefault();
+          current = { startX: ev.clientX, startWidth: th.getBoundingClientRect().width, th, index: i };
+          document.body.style.cursor = 'col-resize';
+        };
+      });
+    });
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (passcode === ADMIN_PASSCODE) {
@@ -328,21 +372,21 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>{t('admin.client')}</th>
-                    <th>{t('admin.dress')}</th>
-                    <th>{t('admin.rentDate')}</th>
-                    <th>{t('admin.trialDate')}</th>
-                    <th>{t('admin.status')}</th>
-                    <th className="admin-table-actions-col">{t('admin.actions')}</th>
-                  </tr>
+                      <th className="resizable">{t('admin.client')}<div className="col-resizer" /></th>
+                      <th className="resizable">{t('admin.dress')}<div className="col-resizer" /></th>
+                      <th className="resizable">{t('admin.rentDate')}<div className="col-resizer" /></th>
+                      <th className="resizable">{t('admin.trialDate')}<div className="col-resizer" /></th>
+                      <th className="resizable">{t('admin.status')}<div className="col-resizer" /></th>
+                      <th className="admin-table-actions-col">{t('admin.actions')}</th>
+                    </tr>
                   <tr>
-                    <th><input className="admin-filter-input" value={filters.client} onChange={(e) => handleFilterChange('client', e.target.value)} placeholder={t('admin.search')} /></th>
-                    <th><input className="admin-filter-input" value={filters.dress} onChange={(e) => handleFilterChange('dress', e.target.value)} placeholder={t('admin.search')} /></th>
-                    <th><input className="admin-filter-input" value={filters.rentDate} onChange={(e) => handleFilterChange('rentDate', e.target.value)} placeholder={t('admin.search')} /></th>
-                    <th><input className="admin-filter-input" value={filters.trialDate} onChange={(e) => handleFilterChange('trialDate', e.target.value)} placeholder={t('admin.search')} /></th>
-                    <th><input className="admin-filter-input" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} placeholder={t('admin.search')} /></th>
-                    <th />
-                  </tr>
+                      <th><input className="admin-filter-input" value={filters.client} onChange={(e) => handleFilterChange('client', e.target.value)} placeholder={t('admin.search')} /></th>
+                      <th><input className="admin-filter-input" value={filters.dress} onChange={(e) => handleFilterChange('dress', e.target.value)} placeholder={t('admin.search')} /></th>
+                      <th><input className="admin-filter-input" value={filters.rentDate} onChange={(e) => handleFilterChange('rentDate', e.target.value)} placeholder={t('admin.search')} /></th>
+                      <th><input className="admin-filter-input" value={filters.trialDate} onChange={(e) => handleFilterChange('trialDate', e.target.value)} placeholder={t('admin.search')} /></th>
+                      <th><input className="admin-filter-input" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} placeholder={t('admin.search')} /></th>
+                      <th />
+                    </tr>
                 </thead>
                 <tbody>
                   {filteredReservations.length === 0 ? (
@@ -386,12 +430,12 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
                 <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>{t('admin.dressTableDress')}</th>
-                    <th>{t('admin.dressTableCode')}</th>
-                    <th>{t('admin.dressTableCategory')}</th>
-                    <th>{t('admin.dressTableRent')}</th>
-                    <th>{t('admin.dressTableSize')}</th>
-                    <th>{t('admin.dressTableFeatured')}</th>
+                    <th className="resizable">{t('admin.dressTableDress')}<div className="col-resizer" /></th>
+                    <th className="resizable">{t('admin.dressTableCode')}<div className="col-resizer" /></th>
+                    <th className="resizable">{t('admin.dressTableCategory')}<div className="col-resizer" /></th>
+                    <th className="resizable">{t('admin.dressTableRent')}<div className="col-resizer" /></th>
+                    <th className="resizable">{t('admin.dressTableSize')}<div className="col-resizer" /></th>
+                    <th className="resizable">{t('admin.dressTableFeatured')}<div className="col-resizer" /></th>
                     <th className="admin-table-actions-col">{t('admin.dressTableActions')}</th>
                   </tr>
                 </thead>
@@ -401,7 +445,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
                       <td>{dress.name}</td>
                       <td className="admin-table-mono">{dress.id}</td>
                       <td>{t(`catalog.categories.${dress.category}`) || dress.category}</td>
-                      <td className="admin-table-price">{dress.price} ج.م</td>
+                      <td className="admin-table-price">{dress.price != null ? `${dress.price} ج.م` : '—'}</td>
                       <td className="admin-table-mono">{dress.size}</td>
                       <td style={{ textAlign: 'center', color: dress.featured ? '#4ade80' : '#a3b2ac', fontWeight: 800, fontSize: '0.85rem' }}>
                         {dress.featured ? `★ ${t('admin.dressTableFeatured')}` : '—'}

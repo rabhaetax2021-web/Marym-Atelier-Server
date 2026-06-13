@@ -460,6 +460,9 @@ body::after {
 .admin-table th > *, .admin-table td > * { direction: rtl; }
 .admin-table th { font-weight: 700; color: var(--text-muted); font-size: 0.9rem; }
 .admin-table-actions-col { width: 220px; text-align: right; }
+.admin-table th.resizable { position: relative; }
+.col-resizer { position: absolute; right: 0; top: 0; width: 8px; height: 100%; cursor: col-resize; }
+.col-resizer:hover { background: rgba(255,255,255,0.02); }
 .admin-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 .admin-action-btn { display: inline-flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.02); color: var(--pearl-white); cursor: pointer; }
 .admin-action-confirm { background: linear-gradient(90deg, rgba(74,222,128,0.12), rgba(74,222,128,0.06)); border-color: rgba(74,222,128,0.14); }

@@ -19,15 +19,39 @@ router.post('/', async (req, res) => {
     // Send to client (blocking)
     const clientResult = await sendWhatsAppMessage({ action, reservation, dress });
 
-    // Background notify admin/sales
+    // Background notify admin/sales — deduplicate phone numbers so each number receives one message
     const notifyRecipients = action === 'new' ? ['admin', 'sales'] : ['admin'];
-    const backgroundNotifications = {};
+
+    // Build a map of unique phone -> recipientType (first seen wins)
+    const uniqueTargets = new Map();
     for (const recipientType of notifyRecipients) {
+      const rawList = recipientType === 'sales'
+        ? (validation.credentials.salesNumber || '')
+        : (validation.credentials.adminNumber || '');
+      const numbers = rawList.split(',').map(n => n.trim()).filter(n => n);
+      for (const num of numbers) {
+        if (!uniqueTargets.has(num)) uniqueTargets.set(num, recipientType);
+      }
+    }
+
+    // Send to each unique number once and group results by recipientType
+    const backgroundNotifications = {};
+    for (const [phone, recipientType] of uniqueTargets) {
       try {
-        backgroundNotifications[recipientType] = await notifyAdminOrSales({ action, reservation, dress, recipientType })
-          .catch((err) => ({ success: false, error: err.message }));
+        if (!backgroundNotifications[recipientType]) {
+          backgroundNotifications[recipientType] = { success: false, count: 0, results: [] };
+        }
+
+        const result = await sendWhatsAppMessage({ action, reservation, dress, recipientPhone: phone, recipientType })
+          .catch(err => ({ success: false, error: err.message }));
+
+        backgroundNotifications[recipientType].count += 1;
+        backgroundNotifications[recipientType].results.push({ phone, ...result });
+        if (result && result.success) backgroundNotifications[recipientType].success = true;
       } catch (err) {
-        backgroundNotifications[recipientType] = { success: false, error: err.message };
+        if (!backgroundNotifications[recipientType]) backgroundNotifications[recipientType] = { success: false, count: 0, results: [] };
+        backgroundNotifications[recipientType].count += 1;
+        backgroundNotifications[recipientType].results.push({ phone, success: false, error: err.message });
       }
     }
 

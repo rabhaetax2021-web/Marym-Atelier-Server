@@ -133,25 +133,36 @@ router.post('/notify-reservation', async (req, res) => {
       dress,
     });
 
-    // Determine who to notify based on action
+    // Determine who to notify based on action and deduplicate numbers
     const notifyRecipients = action === 'new' ? ['admin', 'sales'] : ['admin'];
 
-    // Notify admin/sales in background (non-blocking)
-    const backgroundNotifications = {};
+    // Build unique targets (phone -> recipientType)
+    const validation = validateWhatsAppEnv();
+    const uniqueTargets = new Map();
     for (const recipientType of notifyRecipients) {
+      const rawList = recipientType === 'sales'
+        ? (validation.credentials.salesNumber || '')
+        : (validation.credentials.adminNumber || '');
+      const numbers = rawList.split(',').map(n => n.trim()).filter(n => n);
+      for (const num of numbers) {
+        if (!uniqueTargets.has(num)) uniqueTargets.set(num, recipientType);
+      }
+    }
+
+    const backgroundNotifications = {};
+    for (const [phone, recipientType] of uniqueTargets) {
       try {
-        backgroundNotifications[recipientType] = await notifyAdminOrSales({
-          action,
-          reservation,
-          dress,
-          recipientType,
-        }).catch((err) => {
-          console.warn(`⚠️  Failed to notify ${recipientType} (non-blocking):`, err.message);
-          return { success: false, error: err.message };
-        });
+        if (!backgroundNotifications[recipientType]) backgroundNotifications[recipientType] = { success: false, count: 0, results: [] };
+        const result = await sendWhatsAppMessage({ action, reservation, dress, recipientPhone: phone, recipientType })
+          .catch(err => ({ success: false, error: err.message }));
+
+        backgroundNotifications[recipientType].count = (backgroundNotifications[recipientType].count || 0) + 1;
+        backgroundNotifications[recipientType].results.push({ phone, ...result });
+        if (result && result.success) backgroundNotifications[recipientType].success = true;
       } catch (err) {
-        console.warn(`⚠️  ${recipientType} notification failed (non-blocking):`, err.message);
-        backgroundNotifications[recipientType] = { success: false, error: err.message };
+        if (!backgroundNotifications[recipientType]) backgroundNotifications[recipientType] = { success: false, count: 0, results: [] };
+        backgroundNotifications[recipientType].count = (backgroundNotifications[recipientType].count || 0) + 1;
+        backgroundNotifications[recipientType].results.push({ phone, success: false, error: err.message });
       }
     }
 

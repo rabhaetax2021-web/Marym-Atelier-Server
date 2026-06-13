@@ -17,7 +17,7 @@ function useProductMeta(dress) {
     };
     const image = resolveUrl(dress.images?.[0]);
     const title = `${dress.name} | MaryMatelier`;
-    const description = dress.details || `${dress.name} — إيجار يومي ${dress.price} ج.م`;
+    const description = dress.details || (dress.price != null ? `${dress.name} — إيجار يومي ${dress.price} ج.م` : `${dress.name}`);
 
     document.title = title;
 
@@ -36,8 +36,10 @@ function useProductMeta(dress) {
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', 'product');
     if (image) setMeta('property', 'og:image', image);
-    setMeta('property', 'product:price:amount', String(dress.price));
-    setMeta('property', 'product:price:currency', 'EGP');
+    if (dress.price != null) {
+      setMeta('property', 'product:price:amount', String(dress.price));
+      setMeta('property', 'product:price:currency', 'EGP');
+    }
 
     let schema = document.getElementById('product-schema');
     if (!schema) {
@@ -56,8 +58,7 @@ function useProductMeta(dress) {
       image: (dress.images || []).map((img) => resolveUrl(img)),
       offers: {
         '@type': 'Offer',
-        price: dress.price,
-        priceCurrency: 'EGP',
+        ...(dress.price != null ? { price: dress.price, priceCurrency: 'EGP' } : {}),
         availability: dress.available
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
@@ -250,9 +251,15 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
             <div className="product-price-block">
               <span className="product-price-label">سعر الإيجار اليومي</span>
               <div className="product-price-row">
-                <span className="product-price">{dress.price.toLocaleString('ar-EG')}</span>
-                <span className="product-currency">ج.م</span>
-                <span className="product-price-unit">/ يوم</span>
+                {dress.price != null ? (
+                  <>
+                    <span className="product-price">{String(dress.price).toLocaleString ? Number(dress.price).toLocaleString('ar-EG') : String(dress.price)}</span>
+                    <span className="product-currency">ج.م</span>
+                    <span className="product-price-unit">/ يوم</span>
+                  </>
+                ) : (
+                  <span className="product-price">—</span>
+                )}
               </div>
             </div>
 

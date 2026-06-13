@@ -27,7 +27,7 @@ export default function SideCart({ isOpen, onClose, items = [], onRemove, onFini
                   <img src={d.images?.[0] || '/dresses/emerald.png'} alt={d.name} className="sidecart-item-img" />
                   <div className="sidecart-item-info">
                     <div className="sidecart-item-name">{d.name}</div>
-                    <div className="sidecart-item-price">{d.price} ج.م</div>
+                    <div className="sidecart-item-price">{d.price != null ? `${d.price} ج.م` : '—'}</div>
                   </div>
                   <button type="button" onClick={() => onRemove(d.id)} className="sidecart-item-remove">{t('form.cancel')}</button>
                 </li>

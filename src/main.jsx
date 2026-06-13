@@ -72,10 +72,14 @@ createRoot(document.getElementById('root')).render(
       window.location.reload();
     }
 
-    // When a new service worker takes control, reload once to ensure fresh UI
+    // When a new service worker takes control, reload once to ensure fresh UI.
+    // Debounce and mark refreshInProgress to avoid rapid reload loops.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshInProgress) window.location.reload();
+        if (refreshInProgress) return;
+        refreshInProgress = true;
+        // allow service worker to settle, then reload once
+        setTimeout(() => window.location.reload(), 1000);
       });
     }
 

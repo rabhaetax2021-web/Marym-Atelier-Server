@@ -52,7 +52,7 @@ export default function CatalogView({ dresses, onSelectDress }) {
         ? (!!dress.bigSize || ['XL', 'XXL'].includes(dress.size))
         : (dress.category === selectedCategory || isArabicCategoryMatch(dress, selectedCategory));
     const matchesSize = selectedSize === 'all' || dress.size === selectedSize;
-    const matchesPrice = dress.price <= maxPrice;
+    const matchesPrice = dress.price == null || dress.price <= maxPrice;
 
     return matchesSearch && matchesCategory && matchesSize && matchesPrice;
   });
