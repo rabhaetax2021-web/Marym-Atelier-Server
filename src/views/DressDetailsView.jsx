@@ -248,20 +248,18 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
               <span className="product-sku-inline">كود: {dress.id}</span>
             </div>
 
-            <div className="product-price-block">
-              <span className="product-price-label">سعر الإيجار اليومي</span>
-              <div className="product-price-row">
-                {(typeof dress.price === 'number' && dress.price > 0) ? (
-                    <>
-                      <span className="product-price">{String(dress.price).toLocaleString ? Number(dress.price).toLocaleString('ar-EG') : String(dress.price)}</span>
-                      <span className="product-currency">ج.م</span>
-                      <span className="product-price-unit">/ يوم</span>
-                    </>
-                  ) : (
-                    <span className="product-price">—</span>
-                  )}
+            {(typeof dress.price === 'number' && dress.price > 0) && (
+              <div className="product-price-block">
+                <span className="product-price-label">سعر الإيجار اليومي</span>
+                <div className="product-price-row">
+                  <>
+                    <span className="product-price">{String(dress.price).toLocaleString ? Number(dress.price).toLocaleString('ar-EG') : String(dress.price)}</span>
+                    <span className="product-currency">ج.م</span>
+                    <span className="product-price-unit">/ يوم</span>
+                  </>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="product-divider" />
 
