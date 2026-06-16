@@ -45,7 +45,7 @@ const TRANSLATIONS = {
       footerVisit: 'زورينا في أتيليه MaryMatelier',
       developedBy: 'Developed By AAM-Tech',
       footerCopy: 'أرقى خدمات تصميم المواقع والانظمة.خدمة روابط الواتساب الفورية.',
-      address: مدينة 6 اكتوبر',
+      address: 'مدينة 6 اكتوبر',
       contact: 'اتصلي بنا',
       about: 'عن المتجر',
       faq: 'الأسئلة الشائعة',
