@@ -101,6 +101,18 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
 
+  const resolveUrl = (img) => {
+    if (!img) return '';
+    try {
+      if (typeof img !== 'string') return String(img);
+      if (img.startsWith('http') || img.startsWith('data:')) return img;
+      if (img.startsWith('/')) return window.location.origin + img;
+      return img;
+    } catch (e) {
+      return '';
+    }
+  };
+
   useProductMeta(dress);
 
   useEffect(() => {
@@ -127,7 +139,8 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
   }
 
   const images = Array.isArray(dress.images) && dress.images.length > 0 ? dress.images : ['/dresses/emerald.png'];
-  const hasMultipleImages = images.length > 1;
+  const renderedImages = images.map(resolveUrl);
+  const hasMultipleImages = renderedImages.length > 1;
 
   const goPrev = () => setActiveImageIdx((i) => (i === 0 ? images.length - 1 : i - 1));
   const goNext = () => setActiveImageIdx((i) => (i === images.length - 1 ? 0 : i + 1));
@@ -176,7 +189,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
             <div className="gallery-inner">
               {hasMultipleImages && (
                 <div className="gallery-thumbs" role="tablist" aria-label="صور مصغرة">
-                  {images.map((img, idx) => (
+                  {renderedImages.map((img, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -199,7 +212,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
                   onClick={() => { setIsFullscreen(true); setZoomLevel(1); }}
                   aria-label="عرض الصورة بالحجم الكامل"
                 >
-                  <img src={images[activeImageIdx]} alt={dress.name} loading="lazy" />
+                  <img src={renderedImages[activeImageIdx]} alt={dress.name} loading="lazy" />
                 </button>
 
                 {hasMultipleImages && (
@@ -218,7 +231,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
 
             {hasMultipleImages && (
               <div className="gallery-thumbs-mobile">
-                {images.map((img, idx) => (
+                {renderedImages.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -390,7 +403,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
 
             <div className="overflow-hidden rounded-2xl border border-white/5 max-h-[88vh]">
               <img
-                src={images[activeImageIdx]}
+                src={renderedImages[activeImageIdx]}
                 alt={dress.name}
                 className="max-h-[88vh] max-w-full object-contain transition-transform duration-300"
                 style={{ transform: `scale(${zoomLevel})` }}
