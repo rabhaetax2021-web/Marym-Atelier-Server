@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Replace the domain below with your site's canonical URL
+Sitemap: https://marymatelier.com/sitemap.xml
