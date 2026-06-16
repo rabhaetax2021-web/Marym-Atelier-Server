@@ -361,8 +361,6 @@ export default function CatalogView({ dresses, onSelectDress }) {
         <div className="footer-grid">
           <div>
             <p className="eyebrow-label">{t('catalog.footerVisit')}</p>
-            <h4>{t('catalog.developedBy')}</h4>
-            <p className="footer-copy">{t('catalog.footerCopy')}</p>
             <p id="about-address" className="footer-address">{t('catalog.address')}</p>
           </div>
           <div className="footer-links">
@@ -384,6 +382,7 @@ export default function CatalogView({ dresses, onSelectDress }) {
           </div>
         </div>
         <div className="footer-note">
+          <h4>{t('catalog.developedBy')}</h4>
           <span>{t('catalog.footerNote')}</span>
           <div className="footer-heart">
             <Heart size={14} />
