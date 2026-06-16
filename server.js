@@ -131,6 +131,24 @@ const staticDir = path.resolve(__dirname, 'dist');
   // - HTML entry pages: no-cache, no-store, must-revalidate
   // - Static hashed assets (js/css/images): public, max-age=31536000, immutable
   // - Special files (env.js, version.json): no-cache so clients always fetch latest version info
+  // Dynamic env.js endpoint: if dist/env.js is missing on the filesystem
+  // serve a minimal runtime `env.js` built from the server environment so
+  // clients don't 404 while still respecting no-cache for this file.
+  app.get('/env.js', (req, res, next) => {
+    try {
+      const envPath = path.join(staticDir, 'env.js');
+      if (fs.existsSync(envPath)) return res.sendFile(envPath);
+      const version = process.env.BUILD_VERSION || process.env.npm_package_version || 'unknown';
+      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      return res.send(`window.__APP_VERSION__ = ${JSON.stringify(version)};`);
+    } catch (err) {
+      return next(err);
+    }
+  });
+
   app.use(express.default.static(staticDir, {
     setHeaders: (res, filePath) => {
       try {

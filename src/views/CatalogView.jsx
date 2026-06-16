@@ -160,6 +160,32 @@ export default function CatalogView({ dresses, onSelectDress }) {
     } catch { /* fallback: do nothing */ }
   };
 
+  const scrollToFaq = (e) => {
+    try {
+      if (e && e.preventDefault) e.preventDefault();
+      const el = document.getElementById('faqs-title');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch { /* ignore */ }
+  };
+
+  const openWhatsAppSupport = (e) => {
+    try {
+      if (e && e.preventDefault) e.preventDefault();
+      const phone = '201055492569'; // WHATSAPP_SUPPORT_NUMBER from env.production
+      const msg = lang === 'ar' ? 'مرحبًا، أحتاج مساعدة من Marym Atelier' : 'Hi, I need support from Marym Atelier';
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch { /* ignore */ }
+  };
+
+  const scrollToAbout = (e) => {
+    try {
+      if (e && e.preventDefault) e.preventDefault();
+      const el = document.getElementById('about-address');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch { /* ignore */ }
+  };
+
   return (
     <div className="catalog-page min-h-screen pb-20">
       <header className="shop-header glass-panel">
@@ -337,11 +363,20 @@ export default function CatalogView({ dresses, onSelectDress }) {
             <p className="eyebrow-label">{t('catalog.footerVisit')}</p>
             <h4>{t('catalog.developedBy')}</h4>
             <p className="footer-copy">{t('catalog.footerCopy')}</p>
+            <p id="about-address" className="footer-address">{t('catalog.address')}</p>
           </div>
           <div className="footer-links">
-            <a href="#" className="footer-link">{t('catalog.contact')}</a>
-            <a href="#" className="footer-link">{t('catalog.about')}</a>
-            <a href="#" className="footer-link">{t('catalog.faq')}</a>
+            <a
+              href="https://wa.me/201055492569"
+              className="footer-link"
+              onClick={openWhatsAppSupport}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('catalog.contact')}
+            </a>
+            <a href="#about-address" className="footer-link" onClick={scrollToAbout}>{t('catalog.about')}</a>
+            <a href="#faqs-title" className="footer-link" onClick={scrollToFaq}>{t('catalog.faq')}</a>
             <a href="https://www.instagram.com/marymatelier" target="_blank" rel="noopener noreferrer" className="footer-link footer-social" aria-label="Instagram">
               <InstagramIcon size={16} />
               <span className="footer-social-label">{t('social.instagram')}</span>
