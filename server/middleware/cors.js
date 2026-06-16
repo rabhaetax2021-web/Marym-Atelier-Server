@@ -48,9 +48,39 @@ export default function corsMiddleware(req, res, next) {
   }
 
   if (!originToUse) originToUse = '*';
-  res.setHeader('Access-Control-Allow-Origin', originToUse);
-  // Ensure caches vary by Origin when dynamic
-  res.setHeader('Vary', 'Origin');
+  // Normalize any pre-existing Access-Control-Allow-Origin header to avoid duplicate values
+  try {
+    const existing = res.getHeader('Access-Control-Allow-Origin');
+    if (existing) {
+      const existingVals = Array.isArray(existing) ? existing : String(existing).split(',').map(s => s.trim()).filter(Boolean);
+      // If the existing header already matches the value we want, keep a single value
+      if (existingVals.length === 1 && existingVals[0] === originToUse) {
+        res.setHeader('Access-Control-Allow-Origin', originToUse);
+      } else {
+        // Overwrite with the computed single allowed origin to avoid multiple values
+        res.setHeader('Access-Control-Allow-Origin', originToUse);
+      }
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', originToUse);
+    }
+  } catch (e) {
+    // Fallback: set header normally
+    res.setHeader('Access-Control-Allow-Origin', originToUse);
+  }
+
+  // Ensure caches vary by Origin when dynamic — merge with any existing Vary header
+  try {
+    const existingVary = res.getHeader('Vary');
+    if (existingVary) {
+      const varyVals = Array.isArray(existingVary) ? existingVary : String(existingVary).split(',').map(s => s.trim()).filter(Boolean);
+      if (!varyVals.includes('Origin')) varyVals.push('Origin');
+      res.setHeader('Vary', varyVals.join(', '));
+    } else {
+      res.setHeader('Vary', 'Origin');
+    }
+  } catch (e) {
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (allowCredentials) res.setHeader('Access-Control-Allow-Credentials', 'true');
