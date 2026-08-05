@@ -42,6 +42,7 @@ function App() {
   const initial = parseRoute();
   const [currentView, setCurrentView] = useState(initial.view);
   const [selectedDressId, setSelectedDressId] = useState(initial.dressId);
+  const [savedCatalogScroll, setSavedCatalogScroll] = useState(0);
 
   // Booking modal state — completely separate from page routing
   const [schedulingDress, setSchedulingDress] = useState(null);
@@ -96,6 +97,11 @@ function App() {
       const route = parseRoute();
       setCurrentView(route.view);
       setSelectedDressId(route.dressId);
+      if (route.view === 'catalog') {
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: savedCatalogScroll, behavior: 'auto' });
+        });
+      }
     };
 
     // Listen for external notifications that dresses changed
@@ -129,7 +135,14 @@ function App() {
     window.history.pushState({}, '', path);
     setCurrentView(view);
     setSelectedDressId(dressId);
-    window.scrollTo(0, 0);
+
+    if (view === 'catalog') {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: savedCatalogScroll, behavior: 'auto' });
+      });
+    } else {
+      window.scrollTo(0, 0);
+    }
   };
 
   const handleRefreshDresses = async () => {
@@ -151,6 +164,7 @@ function App() {
 
   // Dress clicked in catalog → open full dress page
   const handleSelectDress = (dress) => {
+    setSavedCatalogScroll(window.scrollY || window.pageYOffset || 0);
     navigate('dress', dress.id);
   };
 
