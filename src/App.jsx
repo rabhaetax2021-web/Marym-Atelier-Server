@@ -43,6 +43,7 @@ function App() {
   const [currentView, setCurrentView] = useState(initial.view);
   const [selectedDressId, setSelectedDressId] = useState(initial.dressId);
   const [savedCatalogScroll, setSavedCatalogScroll] = useState(0);
+  const [catalogPage, setCatalogPage] = useState(1);
 
   // Booking modal state — completely separate from page routing
   const [schedulingDress, setSchedulingDress] = useState(null);
@@ -209,6 +210,8 @@ function App() {
         <CatalogView
           dresses={dresses}
           onSelectDress={handleSelectDress}
+          catalogPage={catalogPage}
+          onPageChange={setCatalogPage}
         />
       )}
 

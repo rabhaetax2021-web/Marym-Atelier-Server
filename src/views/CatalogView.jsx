@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import { useLang } from '../contexts/LanguageProvider';
 import { fetchFAQs, getSetting } from '../services/dbService';
 
-export default function CatalogView({ dresses, onSelectDress }) {
+export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, onPageChange = () => {} }) {
   const { lang, setLang, t } = useLang();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -109,7 +109,22 @@ export default function CatalogView({ dresses, onSelectDress }) {
 
   const featuredDress = dresses.find(d => d.featured) || null;
   const [faqs, setFaqs] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(12);
+  const pageSize = 12;
+  const totalPages = Math.max(1, Math.ceil(sortedDresses.length / pageSize));
+  const page = Math.min(Math.max(1, catalogPage), totalPages);
+  const pageDresses = sortedDresses.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    if (catalogPage > totalPages) {
+      onPageChange(totalPages);
+    }
+  }, [catalogPage, totalPages, onPageChange]);
+
+  useEffect(() => {
+    if (catalogPage !== 1) {
+      onPageChange(1);
+    }
+  }, [searchTerm, selectedCategory, sortOrder, onPageChange, catalogPage]);
 
   useEffect(() => {
     (async () => {
@@ -311,7 +326,7 @@ export default function CatalogView({ dresses, onSelectDress }) {
         </div>
 
         <div className="product-grid">
-          {sortedDresses.slice(0, visibleCount).map((dress) => (
+          {pageDresses.map((dress) => (
             <ProductCard
               key={dress.id}
               dress={dress}
@@ -320,15 +335,24 @@ export default function CatalogView({ dresses, onSelectDress }) {
             />
           ))}
         </div>
-        {sortedDresses.length > visibleCount && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
-            <button
-              className="glass-button"
-              onClick={() => setVisibleCount((v) => v + 12)}
-              aria-label="Show more dresses"
-            >
-              {t('catalog.showMore')}
-            </button>
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
+            {Array.from({ length: totalPages }, (_, index) => {
+              const pageNumber = index + 1;
+              const isActive = pageNumber === page;
+              return (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  className="glass-button small-button"
+                  style={isActive ? { backgroundColor: 'rgba(229, 192, 96, 0.15)', borderColor: 'rgba(229, 192, 96, 0.35)' } : undefined}
+                  onClick={() => onPageChange(pageNumber)}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
           </div>
         )}
       </section>
