@@ -328,7 +328,7 @@ export default function DressDetailsView({ dress, onBack, onAddToCart }) {
 
         {/* Floating WhatsApp support button for product page */}
         <a
-          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || '201012345678'}?text=${encodeURIComponent(`${t('whatsapp.title') || 'مرحباً، أحتاج إلى مساعدة بخصوص الحجز.'} - ${dress.name}`)}`}
+          href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || '201055492569'}?text=${encodeURIComponent(`${t('whatsapp.title') || 'مرحباً، أحتاج إلى مساعدة بخصوص الحجز.'} - ${dress.name}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Contact support on WhatsApp"

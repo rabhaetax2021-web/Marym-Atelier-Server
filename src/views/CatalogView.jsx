@@ -124,7 +124,7 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
     if (catalogPage !== 1) {
       onPageChange(1);
     }
-  }, [searchTerm, selectedCategory, sortOrder, onPageChange, catalogPage]);
+  }, [searchTerm, selectedCategory, sortOrder, onPageChange]);
 
   useEffect(() => {
     (async () => {
@@ -186,9 +186,9 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
   const openWhatsAppSupport = (e) => {
     try {
       if (e && e.preventDefault) e.preventDefault();
-      const phone = '201055492569'; // WHATSAPP_SUPPORT_NUMBER from env.production
+      const supportPhone = import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || '201055492569';
       const msg = lang === 'ar' ? 'مرحبًا، أحتاج مساعدة من Marym Atelier' : 'Hi, I need support from Marym Atelier';
-      const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      const url = `https://wa.me/${supportPhone}?text=${encodeURIComponent(msg)}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch { /* ignore */ }
   };
@@ -389,7 +389,7 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
           </div>
           <div className="footer-links">
             <a
-              href="https://wa.me/201055492569"
+              href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_SUPPORT_NUMBER || '201055492569'}`}
               className="footer-link"
               onClick={openWhatsAppSupport}
               target="_blank"
