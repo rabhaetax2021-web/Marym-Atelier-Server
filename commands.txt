@@ -10,7 +10,7 @@ cd /root/Marym-Atelier-Server
 
 pull and rerun
 
-git fetch origin && git reset --hard origin/main && rm -rf node_modules build dist .next public/sw.js dist/sw.js && npm install && npm run build && pm2 restart npm --name "marym-server" -- start && pm2 save && pm2 startup && pm2 save
+git fetch origin && git reset --hard origin/main && rm -rf node_modules build dist .next public/sw.js dist/sw.js && npm install && npm run build && pm2 restart marym-server && pm2 save && pm2 startup && pm2 save
 
 
 make bucket in minIO public
