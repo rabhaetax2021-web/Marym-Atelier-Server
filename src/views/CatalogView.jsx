@@ -109,22 +109,34 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
 
   const featuredDress = dresses.find(d => d.featured) || null;
   const [faqs, setFaqs] = useState([]);
+  const [pageIndex, setPageIndex] = useState(catalogPage);
   const pageSize = 12;
   const totalPages = Math.max(1, Math.ceil(sortedDresses.length / pageSize));
-  const page = Math.min(Math.max(1, catalogPage), totalPages);
+  const page = Math.min(Math.max(1, pageIndex), totalPages);
   const pageDresses = sortedDresses.slice((page - 1) * pageSize, page * pageSize);
 
   useEffect(() => {
-    if (catalogPage > totalPages) {
-      onPageChange(totalPages);
-    }
-  }, [catalogPage, totalPages, onPageChange]);
+    setPageIndex(catalogPage);
+  }, [catalogPage]);
 
   useEffect(() => {
-    if (catalogPage !== 1) {
+    if (page > totalPages) {
+      setPageIndex(totalPages);
+      onPageChange(totalPages);
+    }
+  }, [page, totalPages, onPageChange]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPageIndex(1);
       onPageChange(1);
     }
-  }, [searchTerm, selectedCategory, sortOrder, onPageChange]);
+  }, [searchTerm, selectedCategory, sortOrder, onPageChange, page]);
+
+  const handlePageChange = (pageNumber) => {
+    setPageIndex(pageNumber);
+    onPageChange(pageNumber);
+  };
 
   useEffect(() => {
     (async () => {
@@ -346,7 +358,7 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
                   type="button"
                   className="glass-button small-button"
                   style={isActive ? { backgroundColor: 'rgba(229, 192, 96, 0.15)', borderColor: 'rgba(229, 192, 96, 0.35)' } : undefined}
-                  onClick={() => onPageChange(pageNumber)}
+                  onClick={() => handlePageChange(pageNumber)}
                   aria-current={isActive ? 'page' : undefined}
                 >
                   {pageNumber}
