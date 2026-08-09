@@ -109,33 +109,27 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
 
   const featuredDress = dresses.find(d => d.featured) || null;
   const [faqs, setFaqs] = useState([]);
-  const [pageIndex, setPageIndex] = useState(catalogPage);
   const pageSize = 12;
   const totalPages = Math.max(1, Math.ceil(sortedDresses.length / pageSize));
-  const page = Math.min(Math.max(1, pageIndex), totalPages);
+  const page = Math.min(Math.max(1, catalogPage), totalPages);
   const pageDresses = sortedDresses.slice((page - 1) * pageSize, page * pageSize);
 
   useEffect(() => {
-    setPageIndex(catalogPage);
-  }, [catalogPage]);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPageIndex(totalPages);
+    if (catalogPage > totalPages) {
       onPageChange(totalPages);
     }
-  }, [page, totalPages, onPageChange]);
+  }, [catalogPage, totalPages, onPageChange]);
 
   useEffect(() => {
-    if (page !== 1) {
-      setPageIndex(1);
+    if (catalogPage !== 1) {
       onPageChange(1);
     }
-  }, [searchTerm, selectedCategory, sortOrder, onPageChange, page]);
+  }, [searchTerm, selectedCategory, sortOrder, onPageChange, catalogPage]);
 
-  const handlePageChange = (pageNumber) => {
-    setPageIndex(pageNumber);
-    onPageChange(pageNumber);
+  const handleNextPage = () => {
+    if (catalogPage < totalPages) {
+      onPageChange(catalogPage + 1);
+    }
   };
 
   useEffect(() => {
@@ -348,23 +342,20 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
           ))}
         </div>
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
-            {Array.from({ length: totalPages }, (_, index) => {
-              const pageNumber = index + 1;
-              const isActive = pageNumber === page;
-              return (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  className="glass-button small-button"
-                  style={isActive ? { backgroundColor: 'rgba(229, 192, 96, 0.15)', borderColor: 'rgba(229, 192, 96, 0.35)' } : undefined}
-                  onClick={() => handlePageChange(pageNumber)}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18 }}>
+            <button
+              type="button"
+              className="glass-button small-button"
+              onClick={handleNextPage}
+              disabled={page >= totalPages}
+            >
+              {lang === 'ar' ? 'العرض التالي' : 'Next 12 dresses'}
+            </button>
+            <span style={{ color: '#666' }}>
+              {lang === 'ar'
+                ? `صفحة ${page} من ${totalPages}`
+                : `Page ${page} of ${totalPages}`}
+            </span>
           </div>
         )}
       </section>
