@@ -111,8 +111,10 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
   const [faqs, setFaqs] = useState([]);
   const pageSize = 12;
   const totalPages = Math.max(1, Math.ceil(sortedDresses.length / pageSize));
-  const page = Math.min(Math.max(1, catalogPage), totalPages);
-  const pageDresses = sortedDresses.slice((page - 1) * pageSize, page * pageSize);
+  // catalogPage now represents how many pages have been loaded (1 = first page, 2 = first 24, etc.)
+  const loadedPages = Math.min(Math.max(1, catalogPage), totalPages);
+  const visibleCount = Math.min(sortedDresses.length, loadedPages * pageSize);
+  const pageDresses = sortedDresses.slice(0, visibleCount);
 
   useEffect(() => {
     if (catalogPage > totalPages) {
@@ -121,6 +123,7 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
   }, [catalogPage, totalPages, onPageChange]);
 
   useEffect(() => {
+    // when filters/search/sort change, reset to first page (only first page visible)
     if (catalogPage !== 1) {
       onPageChange(1);
     }
@@ -351,15 +354,10 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
               type="button"
               className="glass-button small-button"
               onClick={handleNextPage}
-              disabled={page >= totalPages}
+              disabled={loadedPages >= totalPages}
             >
-              {lang === 'ar' ? 'العرض التالي' : 'Next 12 dresses'}
+              {lang === 'ar' ? 'عرض المزيد' : 'Show more'}
             </button>
-            <span style={{ color: '#666' }}>
-              {lang === 'ar'
-                ? `صفحة ${page} من ${totalPages}`
-                : `Page ${page} of ${totalPages}`}
-            </span>
           </div>
         )}
       </section>
