@@ -4,6 +4,14 @@ import { useLang } from '../contexts/LanguageProvider';
 export default function SideCart({ isOpen, onClose, items = [], onRemove, onFinish, onContinue }) {
   const { t } = useLang();
 
+  const normalizeImgUrl = (img) => {
+    if (!img) return '';
+    if (typeof img !== 'string') return String(img);
+    if (img.startsWith('http://')) return img.replace(/^http:/, 'https:');
+    if (img.startsWith('/')) return window.location.origin + img;
+    return img;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -24,7 +32,7 @@ export default function SideCart({ isOpen, onClose, items = [], onRemove, onFini
             <ul className="sidecart-list">
               {items.map((d) => (
                 <li key={d.id} className="sidecart-item">
-                  <img src={d.images?.[0] || '/dresses/emerald.png'} alt={d.name} className="sidecart-item-img" />
+                    <img src={normalizeImgUrl(d.images?.[0] || '/dresses/emerald.png')} alt={d.name} className="sidecart-item-img" />
                   <div className="sidecart-item-info">
                     <div className="sidecart-item-name">{d.name}</div>
                     <div className="sidecart-item-price">{d.price != null ? `${d.price} ج.م` : '—'}</div>

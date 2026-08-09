@@ -12,6 +12,13 @@ import { useLang } from '../contexts/LanguageProvider';
  */
 export default function QRCodeModal({ isOpen, onClose, dresses = [] }) {
   const { t } = useLang();
+  const normalizeImgUrl = (img) => {
+    if (!img) return '';
+    if (typeof img !== 'string') return String(img);
+    if (img.startsWith('http://')) return img.replace(/^http:/, 'https:');
+    if (img.startsWith('/')) return window.location.origin + img;
+    return img;
+  };
   const [qrDataUrls, setQrDataUrls] = useState({});
   const containerRef = useRef(null);
 
@@ -110,7 +117,7 @@ export default function QRCodeModal({ isOpen, onClose, dresses = [] }) {
                 <div className="qr-card-image-row">
                   {d.images?.[0] && (
                     <img
-                      src={d.images[0]}
+                      src={normalizeImgUrl(d.images[0])}
                       alt={d.name}
                       className="qr-card-dress-thumb"
                     />

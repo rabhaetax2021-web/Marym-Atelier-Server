@@ -265,9 +265,13 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
             {featuredDress ? (
               (() => {
                 const img = (featuredDress.images && featuredDress.images[0]) || '/dresses/emerald.png';
-                const src = img && (img.startsWith('http') || img.startsWith('data:') || img.startsWith('/'))
-                  ? (img.startsWith('/') ? window.location.origin + img : img)
-                  : img;
+                const src = img
+                  ? img.startsWith('http://files.marymatelier.com')
+                    ? img.replace(/^http:/, 'https:')
+                    : (img.startsWith('http') || img.startsWith('data:') || img.startsWith('/')
+                      ? (img.startsWith('/') ? window.location.origin + img : img)
+                      : img)
+                  : '';
                 return <img src={src} alt={featuredDress.name || 'Featured dress'} loading="lazy" className="hero-image" />;
               })()
             ) : (

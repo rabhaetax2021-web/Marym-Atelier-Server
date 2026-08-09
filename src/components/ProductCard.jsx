@@ -9,6 +9,7 @@ export default function ProductCard({ dress, onSelect, getCategoryLabel }) {
   const images = Array.isArray(dress.images) && dress.images.length > 0 ? dress.images : ['/dresses/emerald.png'];
   const resolveUrl = (img) => {
     if (!img) return '';
+    if (img.startsWith('http://')) return img.replace(/^http:/, 'https:');
     if (img.startsWith('http') || img.startsWith('data:')) return img;
     if (img.startsWith('/')) return window.location.origin + img;
     return img;

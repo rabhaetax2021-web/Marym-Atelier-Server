@@ -11,6 +11,7 @@ function useProductMeta(dress) {
     const origin = window.location.origin;
     const resolveUrl = (img) => {
       if (!img) return '';
+      if (img.startsWith('http://')) return img.replace(/^http:/, 'https:');
       if (img.startsWith('http') || img.startsWith('data:')) return img;
       if (img.startsWith('/')) return origin + img;
       return img;
