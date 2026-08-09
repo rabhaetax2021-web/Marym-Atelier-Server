@@ -4,7 +4,8 @@ import { X, AlertCircle, Upload, Trash2, ToggleLeft, ToggleRight } from 'lucide-
 import { fetchDesigners, createDesigner } from '../services/dbService';
 import { useLang } from '../contexts/LanguageProvider';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').toString().trim().replace(/\/+$|\/api$/, '');
+const UPLOAD_IMAGE_URL = API_BASE_URL ? `${API_BASE_URL}/api/upload-image` : '/api/upload-image';
 
 const EMPTY_DRESS = {
   id: '',
@@ -121,7 +122,7 @@ export default function DressFormModal({ isOpen, onClose, mode = 'add', dress, d
       for (let i = 0; i < base64Images.length; i += 1) {
         const dataUrl = base64Images[i];
         const filename = files[i]?.name || `upload-${Date.now()}`;
-        const resp = await fetch(`${API_BASE_URL}/api/upload-image`, {
+        const resp = await fetch(UPLOAD_IMAGE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename, dataUrl }),
