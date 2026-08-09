@@ -1,11 +1,11 @@
 const RAW_API_BASE = (import.meta.env.VITE_API_URL || '').toString().trim();
 
-// Normalize to a path-only base so frontend uses relative requests and avoids CORS
+// Normalize the API base so frontend uses the configured backend host when available.
 let API_BASE_URL = '';
 try {
   if (RAW_API_BASE.startsWith('http://') || RAW_API_BASE.startsWith('https://')) {
     const u = new URL(RAW_API_BASE);
-    API_BASE_URL = (u.pathname || '').replace(/\/+$/, '');
+    API_BASE_URL = u.origin + (u.pathname || '').replace(/\/+$/, '');
   } else {
     API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
   }

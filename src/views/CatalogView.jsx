@@ -109,12 +109,10 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
 
   const featuredDress = dresses.find(d => d.featured) || null;
   const [faqs, setFaqs] = useState([]);
-  const pageSize = 12;
+  const pageSize = 9;
   const totalPages = Math.max(1, Math.ceil(sortedDresses.length / pageSize));
-  // catalogPage now represents how many pages have been loaded (1 = first page, 2 = first 24, etc.)
-  const loadedPages = Math.min(Math.max(1, catalogPage), totalPages);
-  const visibleCount = Math.min(sortedDresses.length, loadedPages * pageSize);
-  const pageDresses = sortedDresses.slice(0, visibleCount);
+  const currentPage = Math.min(Math.max(1, catalogPage), totalPages);
+  const pageDresses = sortedDresses.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
     if (catalogPage > totalPages) {
@@ -123,15 +121,16 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
   }, [catalogPage, totalPages, onPageChange]);
 
   useEffect(() => {
-    // when filters/search/sort change, reset to first page (only first page visible)
+    // when filters/search/sort change, reset to first page
     if (catalogPage !== 1) {
       onPageChange(1);
     }
-  }, [searchTerm, selectedCategory, sortOrder, onPageChange, catalogPage]);
+  }, [searchTerm, selectedCategory, sortOrder, onPageChange]);
 
-  const handleNextPage = () => {
-    if (catalogPage < totalPages) {
-      onPageChange(catalogPage + 1);
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      onPageChange(page);
+      scrollToCatalog();
     }
   };
 
@@ -349,15 +348,21 @@ export default function CatalogView({ dresses, onSelectDress, catalogPage = 1, o
           ))}
         </div>
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 18 }}>
-            <button
-              type="button"
-              className="glass-button small-button"
-              onClick={handleNextPage}
-              disabled={loadedPages >= totalPages}
-            >
-              {lang === 'ar' ? 'عرض المزيد' : 'Show more'}
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 18 }}>
+            {Array.from({ length: totalPages }, (_, index) => {
+              const page = index + 1;
+              return (
+                <button
+                  key={`catalog-page-${page}`}
+                  type="button"
+                  className={`glass-button small-button ${currentPage === page ? 'active-page' : ''}`}
+                  onClick={() => handlePageChange(page)}
+                  aria-current={currentPage === page ? 'page' : undefined}
+                >
+                  {page}
+                </button>
+              );
+            })}
           </div>
         )}
       </section>
