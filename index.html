@@ -23,31 +23,5 @@
     <div id="root"></div>
     <!-- Service worker unregister/clear script removed so PWA can function normally -->
     <script type="module" src="src/main.jsx"></script>
-    
-JavaScript SDK
-Enables you to use Facebook Login to lower the barrier for people to sign up on your site.
-The Facebook SDK for JavaScript doesn't have any standalone files that need to be downloaded or installed, instead you simply need to include a short piece of regular JavaScript in your HTML that will asynchronously load the SDK into your pages.
-Script Tag
-Async JavaScript
-<script>
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId            : '997382516096935',
-      autoLogAppEvents : true,
-      xfbml            : true,
-      version          : 'v26.0'
-    });
-  };
-
-  // Load the JavaScript SDK asynchronously
-  (function (d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://connect.facebook.net/en_US/sdk.js";
-    fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'facebook-jssdk'));
-</script>
-Tip: Do not import multiple versions of the SDK accidentally.
   </body>
 </html>
