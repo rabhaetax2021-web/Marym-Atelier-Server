@@ -1,3 +1,5 @@
+import { getLatestWhatsAppConnection } from './whatsappConnectionService.js';
+
 const WHATSAPP_API_BASE = process.env.WHATSAPP_API_BASE || 'https://graph.facebook.com/v17.0';
 const WHATSAPP_SEND_MESSAGE_ENDPOINT = '/messages';
 
@@ -18,6 +20,41 @@ export function validateWhatsAppEnv() {
   };
 
   return { isValid, missing, credentials };
+}
+
+export async function getWhatsAppCredentials() {
+  const validation = validateWhatsAppEnv();
+  if (validation.isValid) {
+    return {
+      ...validation.credentials,
+      source: 'env',
+      isValid: true,
+    };
+  }
+
+  try {
+    const connection = await getLatestWhatsAppConnection();
+    if (connection && connection.access_token && connection.phone_number_id) {
+      return {
+        accessToken: connection.access_token,
+        phoneNumberId: connection.phone_number_id,
+        adminNumber: validation.credentials.adminNumber,
+        salesNumber: validation.credentials.salesNumber,
+        source: 'db',
+        isValid: true,
+        connection,
+      };
+    }
+  } catch (err) {
+    console.error('Error loading WhatsApp connection from DB:', err);
+  }
+
+  return {
+    ...validation.credentials,
+    source: 'env',
+    isValid: false,
+    missing: validation.missing,
+  };
 }
 
 /**
@@ -266,16 +303,16 @@ export function formatWhatsAppMessage({ action, reservation, dress }) {
  * @returns {Promise<Object>} API response
  */
 export async function sendWhatsAppMessage(options) {
-  const validation = validateWhatsAppEnv();
+  const validation = await getWhatsAppCredentials();
 
   if (!validation.isValid) {
-    const error = new Error(`Missing WhatsApp environment variables: ${validation.missing.join(', ')}`);
+    const error = new Error(`Missing WhatsApp credentials: ${validation.missing.join(', ')}`);
     error.code = 'MISSING_ENV';
     error.statusCode = 500;
     throw error;
   }
 
-  const { accessToken, phoneNumberId } = validation.credentials;
+  const { accessToken, phoneNumberId } = validation;
   const { reservation } = options;
 
   if (!reservation?.clientPhone) {

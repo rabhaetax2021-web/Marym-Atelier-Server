@@ -5,6 +5,16 @@ import {
   notifyAdminOrSales,
   validateWhatsAppEnv,
 } from '../services/whatsappApi.js';
+import {
+  getLatestWhatsAppConnection,
+  createWhatsAppConnection,
+} from '../services/whatsappConnectionService.js';
+
+const META_APP_ID = process.env.META_APP_ID || '997382516096935';
+const META_APP_SECRET = process.env.META_APP_SECRET || '';
+const GRAPH_API_VERSION = process.env.WHATSAPP_EMBEDDED_SIGNUP_GRAPH_VERSION || 'v26.0';
+const EMBEDDED_SIGNUP_REDIRECT_URI = process.env.WHATSAPP_EMBEDDED_SIGNUP_REDIRECT_URI || '';
+const GRAPH_BASE_URL = process.env.WHATSAPP_API_BASE || 'https://graph.facebook.com';
 
 const router = Router();
 
@@ -12,16 +22,38 @@ const router = Router();
  * Health check for WhatsApp service
  * GET /api/whatsapp/health
  */
-router.get('/health', (req, res) => {
+router.get('/health', async (req, res) => {
   const validation = validateWhatsAppEnv();
-  const status = validation.isValid ? 'ok' : 'misconfigured';
-  
-  return res.status(validation.isValid ? 200 : 500).json({
-    ok: validation.isValid,
-    status,
-    missing: validation.missing.length > 0 ? validation.missing : undefined,
-    hasAdmin: !!validation.credentials.adminNumber,
-    hasSales: !!validation.credentials.salesNumber,
+  let credentials = validation.credentials;
+  let usingDatabaseConnection = false;
+
+  if (!validation.isValid) {
+    try {
+      const connection = await getLatestWhatsAppConnection();
+      if (connection && connection.access_token && connection.phone_number_id) {
+        usingDatabaseConnection = true;
+        credentials = {
+          accessToken: connection.access_token,
+          phoneNumberId: connection.phone_number_id,
+          adminNumber: process.env.WHATSAPP_ADMIN_NUMBER || '',
+          salesNumber: process.env.WHATSAPP_SALES_NUMBER || '',
+        };
+      }
+    } catch (err) {
+      console.error('Error checking database WhatsApp connection:', err);
+    }
+  }
+
+  const isValid = !!credentials.accessToken && !!credentials.phoneNumberId;
+  const missing = isValid ? [] : validation.missing.length > 0 ? validation.missing : ['WHATSAPP_ACCESS_TOKEN or database WhatsApp connection'];
+
+  return res.status(isValid ? 200 : 500).json({
+    ok: isValid,
+    status: isValid ? 'ok' : 'misconfigured',
+    missing: missing.length > 0 ? missing : undefined,
+    hasAdmin: !!credentials.adminNumber,
+    hasSales: !!credentials.salesNumber,
+    usingDatabaseConnection: usingDatabaseConnection || undefined,
   });
 });
 
@@ -38,7 +70,12 @@ router.get('/health', (req, res) => {
 router.post('/test', async (req, res) => {
   try {
     const validation = validateWhatsAppEnv();
-    if (!validation.isValid) {
+    let isConfigured = validation.isValid;
+    if (!isConfigured) {
+      const connection = await getLatestWhatsAppConnection();
+      isConfigured = !!(connection && connection.access_token && connection.phone_number_id);
+    }
+    if (!isConfigured) {
       return jsonError(
         res,
         500,
@@ -94,6 +131,83 @@ router.post('/test', async (req, res) => {
       error.message,
       error.apiDetails || error.code
     );
+  }
+});
+
+router.get('/connection', async (req, res) => {
+  try {
+    const connection = await getLatestWhatsAppConnection();
+    return res.status(200).json({ ok: true, connection });
+  } catch (error) {
+    console.error('GET /api/whatsapp/connection error:', error);
+    return jsonError(res, 500, 'Failed to load WhatsApp connection status.', error.message);
+  }
+});
+
+router.post('/embedded-signup', async (req, res) => {
+  try {
+    const { code, waba_id, phone_number_id } = req.body || {};
+
+    if (!code) return jsonError(res, 400, 'Authorization code is required.');
+    if (!waba_id || !phone_number_id) {
+      return jsonError(res, 400, 'WABA ID and Phone Number ID are required.');
+    }
+    if (!META_APP_SECRET) {
+      return jsonError(res, 500, 'Server is missing META_APP_SECRET configuration.');
+    }
+
+    const exchangeUrl = new URL(`${GRAPH_BASE_URL}/${GRAPH_API_VERSION}/oauth/access_token`);
+    exchangeUrl.searchParams.set('client_id', META_APP_ID);
+    exchangeUrl.searchParams.set('client_secret', META_APP_SECRET);
+    exchangeUrl.searchParams.set('code', code);
+    if (EMBEDDED_SIGNUP_REDIRECT_URI) {
+      exchangeUrl.searchParams.set('redirect_uri', EMBEDDED_SIGNUP_REDIRECT_URI);
+    }
+
+    const exchangeResponse = await fetch(exchangeUrl.toString());
+    const exchangeData = await exchangeResponse.json().catch(() => null);
+    if (!exchangeResponse.ok || !exchangeData?.access_token) {
+      console.error('Meta code exchange failed:', exchangeData);
+      return jsonError(res, 500, 'Failed to exchange authorization code with Meta.', exchangeData?.error || null);
+    }
+
+    const accessToken = exchangeData.access_token;
+    let displayPhoneNumber = null;
+    try {
+      const phoneResponse = await fetch(`${GRAPH_BASE_URL}/${GRAPH_API_VERSION}/${phone_number_id}?fields=display_phone_number`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const phoneData = await phoneResponse.json().catch(() => null);
+      if (phoneResponse.ok && phoneData?.display_phone_number) {
+        displayPhoneNumber = phoneData.display_phone_number;
+      }
+    } catch (err) {
+      console.warn('Unable to fetch phone number display value:', err);
+    }
+
+    const connection = await createWhatsAppConnection({
+      businessId: null,
+      wabaId: waba_id,
+      phoneNumberId: phone_number_id,
+      accessToken,
+      displayPhoneNumber,
+      status: 'connected',
+    });
+
+    return res.status(200).json({
+      ok: true,
+      connection: {
+        waba_id: connection.waba_id,
+        phone_number_id: connection.phone_number_id,
+        display_phone_number: connection.display_phone_number,
+        status: connection.status,
+        created_at: connection.created_at,
+        updated_at: connection.updated_at,
+      },
+    });
+  } catch (error) {
+    console.error('POST /api/whatsapp/embedded-signup error:', error);
+    return jsonError(res, 500, 'Failed to complete WhatsApp Embedded Signup.', error.message);
   }
 });
 

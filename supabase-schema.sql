@@ -73,3 +73,17 @@ create table if not exists settings (
   value text,
   updated_at timestamptz not null default now()
 );
+
+create table if not exists whatsapp_connections (
+  id bigserial primary key,
+  business_id text,
+  waba_id text not null,
+  phone_number_id text not null,
+  access_token text not null,
+  display_phone_number text,
+  status text not null default 'connected',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists whatsapp_connections_updated_at_idx on whatsapp_connections(updated_at desc);

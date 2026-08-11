@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { sendWhatsAppMessage, validateWhatsAppEnv } from '../services/whatsappApi.js';
+import { sendWhatsAppMessage, getWhatsAppCredentials } from '../services/whatsappApi.js';
 import { jsonError } from '../utils/errors.js';
 
 const router = Router();
@@ -12,9 +12,10 @@ router.post('/', async (req, res) => {
 
     if (!['new', 'confirm'].includes(action)) return jsonError(res, 400, `Invalid action: ${action}`);
 
-    // Validate WhatsApp env (non-blocking decision)
-    const validation = validateWhatsAppEnv();
-    if (!validation.isValid) return jsonError(res, 500, 'WhatsApp service not configured', `Missing: ${validation.missing.join(', ')}`);
+    const credentials = await getWhatsAppCredentials();
+    if (!credentials.isValid) {
+      return jsonError(res, 500, 'WhatsApp service not configured', `Missing: ${credentials.missing.join(', ')}`);
+    }
 
     // Send to client (blocking)
     const clientResult = await sendWhatsAppMessage({ action, reservation, dress });

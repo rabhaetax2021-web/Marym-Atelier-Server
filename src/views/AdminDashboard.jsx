@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, LayoutDashboard, CalendarDays, Database, Settings } from 'lucide-react';
+import WhatsAppConnectionPanel from '../components/WhatsAppConnectionPanel';
 import {
   fetchReservations,
   createDress,
@@ -536,6 +537,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
                   {t('admin.settingsHint3')}
                 </p>
               </div>
+              <WhatsAppConnectionPanel />
               <div className="admin-settings-actions">
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button type="button" onClick={handleTestWhatsApp} disabled={whatsappTesting} className="glass-button" style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
