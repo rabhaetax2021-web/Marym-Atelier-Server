@@ -282,7 +282,6 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
               name="username"
               autoComplete="username"
               className="sr-only"
-              aria-hidden="true"
               tabIndex={-1}
             />
             <input
