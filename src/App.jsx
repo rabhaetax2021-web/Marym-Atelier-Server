@@ -9,119 +9,7 @@ import QRCodeModal from './components/QRCodeModal';
 import SideCart from './components/SideCart';
 import Footer from './components/Footer';
 import { fetchDresses, fetchReservations, createReservation } from './services/dbService';
-function App() {
-  const [signupResult, setSignupResult] = useState(null);
-  const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Only accept messages from Meta
-      if (event.origin !== "https://www.facebook.com") return;
-
-      try {
-        const data = JSON.parse(event.data);
-
-        console.log("WhatsApp Embedded Signup session:", data);
-
-        setSignupResult(data);
-
-        // The exact fields can vary depending on the flow.
-        // Keep the complete object while testing.
-      } catch {
-        // Ignore unrelated messages
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, []);
-
-  const fbLoginCallback = async (response) => {
-    console.log("Meta login response:", response);
-
-    if (!response.authResponse) {
-      setStatus("WhatsApp signup was cancelled or failed.");
-      return;
-    }
-
-    const code = response.authResponse.code;
-
-    setStatus("WhatsApp signup completed. Sending result to server...");
-
-    try {
-      const result = await fetch("/api/whatsapp/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code,
-          signup: signupResult,
-        }),
-      });
-
-      const data = await result.json();
-
-      console.log("Backend result:", data);
-
-      if (!result.ok) {
-        throw new Error(data.error || "Backend request failed");
-      }
-
-      setStatus("WhatsApp connected successfully.");
-    } catch (error) {
-      console.error(error);
-      setStatus(`Connection failed: ${error.message}`);
-    }
-  };
-
-  const launchWhatsAppSignup = () => {
-    if (!window.FB) {
-      setStatus("Meta SDK is not loaded yet. Please try again.");
-      return;
-    }
-
-    setStatus("Opening WhatsApp signup...");
-
-    window.FB.login(fbLoginCallback, {
-      config_id: CONFIG_ID,
-      response_type: "code",
-      override_default_response_type: true,
-      extras: {
-        version: "v4",
-      },
-    });
-  };
-
-  return (
-    <div>
-      {/* Your existing website content */}
-
-      <button
-        onClick={launchWhatsAppSignup}
-        style={{
-          backgroundColor: "#1877f2",
-          border: 0,
-          borderRadius: 4,
-          color: "#fff",
-          cursor: "pointer",
-          fontFamily: "Helvetica, Arial, sans-serif",
-          fontSize: 16,
-          fontWeight: "bold",
-          height: 40,
-          padding: "0 24px",
-        }}
-      >
-        Connect WhatsApp
-      </button>
-
-      {status && <p>{status}</p>}
-    </div>
-  );
-}
 function App() {
   const [dresses, setDresses] = useState([]);
   const [reservations, setReservations] = useState([]);
@@ -362,3 +250,5 @@ function App() {
     </div>
   );
 }
+
+export default App;
