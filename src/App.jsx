@@ -9,11 +9,7 @@ import QRCodeModal from './components/QRCodeModal';
 import SideCart from './components/SideCart';
 import Footer from './components/Footer';
 import { fetchDresses, fetchReservations, createReservation } from './services/dbService';
-import { useEffect, useState } from "react";
-
-const CONFIG_ID = "1418864696721739";
-
-export default function App() {
+function App() {
   const [signupResult, setSignupResult] = useState(null);
   const [status, setStatus] = useState("");
 
@@ -366,5 +362,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
