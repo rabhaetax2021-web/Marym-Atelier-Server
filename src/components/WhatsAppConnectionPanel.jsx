@@ -10,6 +10,8 @@ function parseEmbeddedSignupEvent(event) {
     'https://www.facebook.com',
     'https://facebook.com',
     'https://l.facebook.com',
+    'https://web.facebook.com',
+    'https://www.web.facebook.com',
   ];
   if (!allowedOrigins.includes(event.origin)) return null;
 
@@ -18,13 +20,35 @@ function parseEmbeddedSignupEvent(event) {
     : event.data;
 
   if (!raw || typeof raw !== 'object') return null;
+  if (raw.type !== 'WA_EMBEDDED_SIGNUP') return null;
 
-  const wabaId = raw.whatsapp_business_account_id || raw.waba_id || raw.whatsappBusinessAccountId || raw.whatsapp_business_account?.id;
-  const phoneNumberId = raw.phone_number_id || raw.phoneNumberId || raw.phone_number?.id;
+  const eventType = String(raw.event || '').trim();
+  const data = raw.data || raw;
+  const wabaId = data?.waba_id || data?.whatsapp_business_account_id || data?.whatsappBusinessAccountId || data?.whatsapp_business_account?.id;
+  const phoneNumberId = data?.phone_number_id || data?.phoneNumberId || data?.phone_number?.id;
 
-  if (!wabaId || !phoneNumberId) return null;
+  const parsed = {
+    event: eventType,
+    data,
+    wabaId: wabaId ? String(wabaId) : null,
+    phoneNumberId: phoneNumberId ? String(phoneNumberId) : null,
+  };
 
-  return { wabaId: String(wabaId), phoneNumberId: String(phoneNumberId) };
+  console.log('[WhatsApp Embedded Signup] Event:', parsed);
+
+  if (eventType === 'CANCEL' || eventType === 'ERROR') {
+    return parsed;
+  }
+
+  const allowedSuccessEvents = [
+    'FINISH',
+    'FINISH_ONLY_WABA',
+    'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+  ];
+  if (!allowedSuccessEvents.includes(eventType)) return null;
+  if (!parsed.wabaId) return null;
+
+  return parsed;
 }
 
 export default function WhatsAppConnectionPanel() {
@@ -94,22 +118,30 @@ export default function WhatsAppConnectionPanel() {
           config_id: FACEBOOK_EMBEDDED_SIGNUP_CONFIG_ID,
           response_type: 'code',
           override_default_response_type: true,
-          extras: { version: 'v4' },
+          extras: {
+            version: 'v4',
+            featureType: 'whatsapp_business_app_onboarding',
+            sessionInfoVersion: '3',
+          },
         });
       });
 
       setStatusMessage('Login callback received. Completing signup with backend...');
 
       const sessionData = sessionRef.current;
-      if (!sessionData || !sessionData.wabaId || !sessionData.phoneNumberId) {
-        throw new Error('Embedded Signup session did not return WABA ID and Phone Number ID.');
+      if (!sessionData || !sessionData.wabaId) {
+        throw new Error('Embedded Signup session did not return a WABA ID.');
       }
 
-      await completeEmbeddedSignup({
+      const payload = {
         code: response.authResponse.code,
         waba_id: sessionData.wabaId,
-        phone_number_id: sessionData.phoneNumberId,
-      });
+      };
+      if (sessionData.phoneNumberId) {
+        payload.phone_number_id = sessionData.phoneNumberId;
+      }
+
+      await completeEmbeddedSignup(payload);
 
       setStatusMessage('WhatsApp connection completed successfully. Refreshing status...');
       const refreshed = await fetchWhatsAppConnection();
