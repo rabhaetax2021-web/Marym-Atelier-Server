@@ -4,7 +4,35 @@ import './index.css'
 import App from './App.jsx'
 import { LanguageProvider } from './contexts/LanguageProvider';
 import { clearLegacyLocalStorage } from './data/db';
+const META_APP_ID = '997382516096935';
 
+function loadFacebookSDK() {
+  if (window.FB) return Promise.resolve(window.FB);
+
+  return new Promise((resolve) => {
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: META_APP_ID,
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v26.0',
+      });
+
+      resolve(window.FB);
+    };
+
+    if (document.getElementById('facebook-jssdk')) return;
+
+    const js = document.createElement('script');
+    js.id = 'facebook-jssdk';
+    js.src = 'https://connect.facebook.net/en_US/sdk.js';
+    js.async = true;
+    js.defer = true;
+    document.head.appendChild(js);
+  });
+}
+
+loadFacebookSDK();
 // Clean up legacy WhatsApp localStorage keys on app start
 try { clearLegacyLocalStorage(); } catch (error) { void error; }
 
