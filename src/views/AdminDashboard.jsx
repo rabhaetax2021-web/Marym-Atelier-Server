@@ -284,6 +284,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
               onChange={(e) => setPasscode(e.target.value)}
               placeholder={t('admin.passcodePlaceholder') || t('admin.passcodeLabel')}
               className="glass-input"
+              autoComplete="new-password"
               style={{ width: '100%' }}
               aria-label={t('admin.passcodeLabel')}
             />

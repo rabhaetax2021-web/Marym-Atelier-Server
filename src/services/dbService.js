@@ -14,6 +14,25 @@ try {
   API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
 }
 
+// Runtime fallback: if build-time VITE_API_URL was not provided, allow server to inject
+// a runtime API base via window.__APP_ENV__.API_BASE (served by /env.js).
+try {
+  if (typeof window !== 'undefined' && !API_BASE_URL) {
+    const runtimeBase = (window.__APP_ENV__ && window.__APP_ENV__.API_BASE) || window.__API_BASE__ || '';
+    if (runtimeBase) {
+      const rb = String(runtimeBase || '').trim();
+      if (rb.startsWith('http://') || rb.startsWith('https://')) {
+        try {
+          const u = new URL(rb);
+          API_BASE_URL = u.origin + (u.pathname || '').replace(/\/+$/, '');
+        } catch (e) { void e; API_BASE_URL = rb.replace(/\/+$/, ''); }
+      } else {
+        API_BASE_URL = rb.replace(/\/+$/, '');
+      }
+    }
+  }
+} catch (err) { void err; }
+
 export function apiPath(p) {
   // p should be like '/api/reservations'
   if (!p.startsWith('/')) p = '/' + p;

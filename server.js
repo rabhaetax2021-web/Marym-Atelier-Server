@@ -139,11 +139,34 @@ const staticDir = path.resolve(__dirname, 'dist');
       const envPath = path.join(staticDir, 'env.js');
       if (fs.existsSync(envPath)) return res.sendFile(envPath);
       const version = process.env.BUILD_VERSION || process.env.npm_package_version || 'unknown';
+      // Determine runtime API base to inject for client-side runtime configuration
+      let apiBase = '';
+      try {
+        const raw = process.env.VITE_API_URL || process.env.API_URL || '';
+        if (raw) {
+          // API_URL may contain comma-separated hosts; pick the first
+          const first = String(raw).split(',')[0].trim();
+          if (first) {
+            if (first.startsWith('http://') || first.startsWith('https://')) {
+              const u = new URL(first);
+              apiBase = u.origin + (u.pathname || '').replace(/\/+$/, '');
+            } else {
+              apiBase = first.replace(/\/+$/, '');
+            }
+          }
+        }
+      } catch (err) {
+        void err;
+        apiBase = '';
+      }
+
       res.setHeader('Content-Type', 'application/javascript');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-      return res.send(`window.__APP_VERSION__ = ${JSON.stringify(version)};`);
+      return res.send(
+        `window.__APP_VERSION__ = ${JSON.stringify(version)};\nwindow.__APP_ENV__ = ${JSON.stringify({ API_BASE: apiBase })};`
+      );
     } catch (err) {
       return next(err);
     }
