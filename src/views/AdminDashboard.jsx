@@ -276,6 +276,15 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>{t('admin.loginSubtitle')}</p>
           <form onSubmit={handleLogin} className="space-y-3">
             <label htmlFor="admin-passcode" className="sr-only">{t('admin.passcodeLabel')}</label>
+            {/* Hidden username field to improve password form accessibility and autocomplete behavior */}
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              className="sr-only"
+              aria-hidden="true"
+              tabIndex={-1}
+            />
             <input
               id="admin-passcode"
               name="passcode"
