@@ -14,7 +14,7 @@ try {
   API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
 }
 
-function apiPath(p) {
+export function apiPath(p) {
   // p should be like '/api/reservations'
   if (!p.startsWith('/')) p = '/' + p;
   if (!API_BASE_URL) return p;

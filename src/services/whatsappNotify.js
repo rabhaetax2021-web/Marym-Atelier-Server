@@ -1,4 +1,6 @@
-const endpoint = '/api/notify-reservation';
+import { apiPath } from './dbService.js';
+
+const endpoint = apiPath('/api/notify-reservation');
 
 async function postWhatsAppRequest(payload) {
   const response = await fetch(endpoint, {

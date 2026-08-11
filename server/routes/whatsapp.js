@@ -149,8 +149,8 @@ router.post('/embedded-signup', async (req, res) => {
     const { code, waba_id, phone_number_id } = req.body || {};
 
     if (!code) return jsonError(res, 400, 'Authorization code is required.');
-    if (!waba_id || !phone_number_id) {
-      return jsonError(res, 400, 'WABA ID and Phone Number ID are required.');
+    if (!waba_id) {
+      return jsonError(res, 400, 'WABA ID is required.');
     }
     if (!META_APP_SECRET) {
       return jsonError(res, 500, 'Server is missing META_APP_SECRET configuration.');
@@ -173,22 +173,49 @@ router.post('/embedded-signup', async (req, res) => {
 
     const accessToken = exchangeData.access_token;
     let displayPhoneNumber = null;
-    try {
-      const phoneResponse = await fetch(`${GRAPH_BASE_URL}/${GRAPH_API_VERSION}/${phone_number_id}?fields=display_phone_number`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const phoneData = await phoneResponse.json().catch(() => null);
-      if (phoneResponse.ok && phoneData?.display_phone_number) {
-        displayPhoneNumber = phoneData.display_phone_number;
+    let resolvedPhoneNumberId = phone_number_id;
+
+    if (!resolvedPhoneNumberId) {
+      try {
+        const phoneResponse = await fetch(`${GRAPH_BASE_URL}/${GRAPH_API_VERSION}/${waba_id}/phone_numbers?fields=id,display_phone_number`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const phoneData = await phoneResponse.json().catch(() => null);
+        if (phoneResponse.ok && Array.isArray(phoneData?.data) && phoneData.data.length > 0) {
+          const matchedPhone = phoneData.data[0];
+          resolvedPhoneNumberId = matchedPhone?.id || null;
+          if (matchedPhone?.display_phone_number) {
+            displayPhoneNumber = matchedPhone.display_phone_number;
+          }
+          console.log('Resolved phone number from WABA:', resolvedPhoneNumberId, displayPhoneNumber);
+        }
+      } catch (err) {
+        console.warn('Unable to resolve phone number from WABA:', err);
       }
-    } catch (err) {
-      console.warn('Unable to fetch phone number display value:', err);
+    }
+
+    if (resolvedPhoneNumberId && !displayPhoneNumber) {
+      try {
+        const phoneResponse = await fetch(`${GRAPH_BASE_URL}/${GRAPH_API_VERSION}/${resolvedPhoneNumberId}?fields=display_phone_number`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const phoneData = await phoneResponse.json().catch(() => null);
+        if (phoneResponse.ok && phoneData?.display_phone_number) {
+          displayPhoneNumber = phoneData.display_phone_number;
+        }
+      } catch (err) {
+        console.warn('Unable to fetch phone number display value:', err);
+      }
+    }
+
+    if (!resolvedPhoneNumberId) {
+      return jsonError(res, 500, 'Failed to resolve WhatsApp Phone Number ID from Meta after Embedded Signup.');
     }
 
     const connection = await createWhatsAppConnection({
       businessId: null,
       wabaId: waba_id,
-      phoneNumberId: phone_number_id,
+      phoneNumberId: resolvedPhoneNumberId,
       accessToken,
       displayPhoneNumber,
       status: 'connected',

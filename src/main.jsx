@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { LanguageProvider } from './contexts/LanguageProvider';
 import { clearLegacyLocalStorage } from './data/db';
+import { apiPath } from './services/dbService';
 
 // Clean up legacy WhatsApp localStorage keys on app start
 try { clearLegacyLocalStorage(); } catch (error) { void error; }
@@ -30,9 +31,7 @@ createRoot(document.getElementById('root')).render(
 
     async function getServerVersion() {
       try {
-        const res = await fetch('/api/version', { cache: 'no-store' });
-        if (!res.ok) return null;
-        const data = await res.json();
+          const res = await fetch(apiPath('/api/version'), { cache: 'no-store' });
         return data && data.version ? data.version : null;
       } catch {
         return null;

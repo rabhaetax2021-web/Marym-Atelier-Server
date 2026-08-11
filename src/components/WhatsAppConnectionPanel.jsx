@@ -41,6 +41,7 @@ function parseEmbeddedSignupEvent(event) {
   }
 
   const allowedSuccessEvents = [
+    'SESSION_INFO',
     'FINISH',
     'FINISH_ONLY_WABA',
     'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
@@ -126,9 +127,27 @@ export default function WhatsAppConnectionPanel() {
         });
       });
 
-      setStatusMessage('Login callback received. Completing signup with backend...');
+      setStatusMessage('Login callback received. Waiting for Embedded Signup session info...');
 
-      const sessionData = sessionRef.current;
+      const sessionData = await new Promise((resolve, reject) => {
+        const deadline = Date.now() + 10000;
+        const intervalMs = 250;
+
+        const checkSession = () => {
+          const current = sessionRef.current;
+          if (current) {
+            clearInterval(timer);
+            resolve(current);
+          } else if (Date.now() > deadline) {
+            clearInterval(timer);
+            reject(new Error('Embedded Signup session was not received from Facebook.'));
+          }
+        };
+
+        const timer = setInterval(checkSession, intervalMs);
+        checkSession();
+      });
+
       if (!sessionData || !sessionData.wabaId) {
         throw new Error('Embedded Signup session did not return a WABA ID.');
       }

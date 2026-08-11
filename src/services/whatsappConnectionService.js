@@ -1,4 +1,4 @@
-const API_PREFIX = '/api/whatsapp';
+import { apiPath } from './dbService.js';
 
 async function handleResponse(response) {
   const data = await response.json().catch(() => null);
@@ -12,7 +12,7 @@ async function handleResponse(response) {
 }
 
 export async function fetchWhatsAppConnection() {
-  const response = await fetch(`${API_PREFIX}/connection`, {
+  const response = await fetch(apiPath('/api/whatsapp/connection'), {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -20,7 +20,7 @@ export async function fetchWhatsAppConnection() {
 }
 
 export async function completeEmbeddedSignup({ code, waba_id, phone_number_id }) {
-  const response = await fetch(`${API_PREFIX}/embedded-signup`, {
+  const response = await fetch(apiPath('/api/whatsapp/embedded-signup'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, waba_id, phone_number_id }),
