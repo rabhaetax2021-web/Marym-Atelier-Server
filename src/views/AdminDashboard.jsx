@@ -283,6 +283,7 @@ export default function AdminDashboard({ dresses, onRefreshDresses, onCloseAdmin
               autoComplete="username"
               className="sr-only"
               tabIndex={-1}
+              style={{ display: 'none' }}
             />
             <input
               id="admin-passcode"
