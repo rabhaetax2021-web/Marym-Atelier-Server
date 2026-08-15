@@ -13,9 +13,6 @@ dist-ssr
 *.local
 
 # Environment variables (but keep .env.template for reference)
-.env
-.env.local
-.env.*.local
 logs/
 *.log
 

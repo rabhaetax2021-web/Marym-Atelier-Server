@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WhatsApp Business Management Test</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>WhatsApp Business Management Test</h1>
+
+      <section id="waba" class="card">
+        <h2>WhatsApp Business Account</h2>
+        <div><strong>Business Account ID:</strong> <span id="waba-id">—</span></div>
+        <div><strong>Verified / Display Name:</strong> <span id="waba-name">—</span></div>
+        <div><strong>Quality Rating:</strong> <span id="waba-quality">—</span></div>
+      </section>
+
+      <section id="phones" class="card">
+        <h2>Connected Phone Numbers</h2>
+        <div id="phone-list">No data</div>
+      </section>
+
+      <div class="controls">
+        <button id="refresh">Refresh WhatsApp Information</button>
+        <div id="status" class="status">Ready</div>
+      </div>
+    </main>
+
+    <script>
+      async function fetchInfo() {
+        setStatus('Loading...');
+        try {
+          const res = await fetch('/api/whatsapp-info');
+          const data = await res.json();
+          if (!res.ok) {
+            const err = data?.error || {};
+            showError(res.status, err.message || 'Unknown error', err.suggestion || '');
+            return;
+          }
+
+          document.getElementById('waba-id').textContent = data.whatsapp_business_account.id || '—';
+          document.getElementById('waba-name').textContent = data.whatsapp_business_account.name || '—';
+          document.getElementById('waba-quality').textContent = data.whatsapp_business_account.quality_rating || '—';
+
+          const list = document.getElementById('phone-list');
+          list.innerHTML = '';
+          if (!data.phone_numbers || data.phone_numbers.length === 0) {
+            list.textContent = 'No phone numbers found';
+          } else {
+            data.phone_numbers.forEach(p => {
+              const d = document.createElement('div');
+              d.className = 'phone-item';
+              d.innerHTML = `
+                <div><strong>Phone Number:</strong> ${escapeHtml(p.display_phone_number || '—')}</div>
+                <div><strong>Phone Number ID:</strong> ${escapeHtml(p.id || '—')}</div>
+                <div><strong>Verified Name:</strong> ${escapeHtml(p.verified_name || '—')}</div>
+                <div><strong>Status:</strong> ${escapeHtml(p.status || '—')}</div>
+              `;
+              list.appendChild(d);
+            });
+          }
+
+          setStatus('Loaded');
+        } catch (err) {
+          showError(500, 'Network or server error while fetching WhatsApp info', 'Ensure the server is running and can reach the Meta Graph API.');
+        }
+      }
+
+      function setStatus(text) { document.getElementById('status').textContent = text; }
+
+      function showError(status, message, suggestion) {
+        const list = document.getElementById('phone-list');
+        list.innerHTML = `<div class="error"><strong>Error:</strong> HTTP ${status} — ${escapeHtml(message)}<div class="suggest">${escapeHtml(suggestion || '')}</div></div>`;
+        setStatus('Error');
+      }
+
+      function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+      document.getElementById('refresh').addEventListener('click', fetchInfo);
+      // fetch on load
+      fetchInfo();
+    </script>
+  </body>
+</html>
