@@ -4,10 +4,9 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 const GRAPH_API_VERSION = process.env.GRAPH_API_VERSION || 'v25.0';
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 function maskId(id) {
@@ -17,17 +16,23 @@ function maskId(id) {
   return s.slice(0, 4) + '…' + s.slice(-4);
 }
 
-app.get('/api/whatsapp-info', async (req, res) => {
-  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_BUSINESS_ACCOUNT_ID) {
-    return res.status(400).json({ error: { status: 400, message: 'Server misconfigured: set WHATSAPP_ACCESS_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID in .env', suggestion: 'Add the variables to meta-app-review-test/.env and restart the server' } });
+app.post('/api/whatsapp-info', async (req, res) => {
+  const accessToken = typeof req.body?.accessToken === 'string' ? req.body.accessToken.trim() : '';
+  const businessAccountId = typeof req.body?.businessAccountId === 'string' ? req.body.businessAccountId.trim() : '';
+  const graphApiVersion = typeof req.body?.graphApiVersion === 'string' && req.body.graphApiVersion.trim()
+    ? req.body.graphApiVersion.trim()
+    : GRAPH_API_VERSION;
+
+  if (!accessToken || !businessAccountId) {
+    return res.status(400).json({ error: { status: 400, message: 'Access token and WhatsApp Business Account ID are required.', suggestion: 'Enter the connection details and try again.' } });
   }
 
   try {
-    const base = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-    const headers = { Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}` };
+    const base = `https://graph.facebook.com/${graphApiVersion}`;
+    const headers = { Authorization: `Bearer ${accessToken}` };
 
     // Fetch WABA info
-    const wabaResp = await globalThis.fetch(`${base}/${WHATSAPP_BUSINESS_ACCOUNT_ID}?fields=id,name,quality_rating`, { headers });
+    const wabaResp = await globalThis.fetch(`${base}/${businessAccountId}?fields=id,name,quality_rating`, { headers });
     if (!wabaResp.ok) {
       const body = await wabaResp.json().catch(() => null);
       const message = body?.error?.message || 'Unknown error from Meta Graph API';
@@ -36,7 +41,7 @@ app.get('/api/whatsapp-info', async (req, res) => {
     const waba = await wabaResp.json();
 
     // Fetch phone numbers
-    const phonesResp = await globalThis.fetch(`${base}/${WHATSAPP_BUSINESS_ACCOUNT_ID}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating,status,messaging_limit_info`, { headers });
+    const phonesResp = await globalThis.fetch(`${base}/${businessAccountId}/phone_numbers?fields=id,display_phone_number,verified_name,quality_rating,status,messaging_limit_info`, { headers });
     if (!phonesResp.ok) {
       const body = await phonesResp.json().catch(() => null);
       const message = body?.error?.message || 'Unknown error from Meta Graph API';

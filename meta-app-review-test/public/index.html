@@ -10,6 +10,23 @@
     <main class="container">
       <h1>WhatsApp Business Management Test</h1>
 
+      <section class="card connection-card">
+        <h2>WhatsApp Connection</h2>
+        <p class="hint">Enter a connection to test. Credentials are used for this request only.</p>
+        <form id="connection-form">
+          <label for="access-token">Access Token</label>
+          <input id="access-token" name="accessToken" type="password" autocomplete="off" required />
+
+          <label for="business-account-id">WhatsApp Business Account ID</label>
+          <input id="business-account-id" name="businessAccountId" type="text" inputmode="numeric" required />
+
+          <label for="graph-api-version">Graph API Version</label>
+          <input id="graph-api-version" name="graphApiVersion" type="text" value="v25.0" pattern="v[0-9]+\\.[0-9]+" required />
+
+          <button type="submit">Load WhatsApp Information</button>
+        </form>
+      </section>
+
       <section id="waba" class="card">
         <h2>WhatsApp Business Account</h2>
         <div><strong>Business Account ID:</strong> <span id="waba-id">—</span></div>
@@ -23,16 +40,22 @@
       </section>
 
       <div class="controls">
-        <button id="refresh">Refresh WhatsApp Information</button>
+        <button id="refresh" type="button">Refresh WhatsApp Information</button>
         <div id="status" class="status">Ready</div>
       </div>
     </main>
 
     <script>
       async function fetchInfo() {
+        const form = document.getElementById('connection-form');
+        const formData = new FormData(form);
         setStatus('Loading...');
         try {
-          const res = await fetch('/api/whatsapp-info');
+          const res = await fetch('/api/whatsapp-info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.fromEntries(formData))
+          });
           const data = await res.json();
           if (!res.ok) {
             const err = data?.error || {};
@@ -78,9 +101,11 @@
 
       function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
+      document.getElementById('connection-form').addEventListener('submit', event => {
+        event.preventDefault();
+        fetchInfo();
+      });
       document.getElementById('refresh').addEventListener('click', fetchInfo);
-      // fetch on load
-      fetchInfo();
     </script>
   </body>
 </html>

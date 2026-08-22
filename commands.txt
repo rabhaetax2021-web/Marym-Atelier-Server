@@ -18,4 +18,3 @@ make bucket in minIO public
 mc anonymous set public myminio/ashrabha
 
 
---
